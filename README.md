@@ -1,6 +1,6 @@
 # Fly-Share
 
-A network file sharing application built with Node.js, Express, React, and Docker.
+A local network file sharing application built with Node.js, Express, React, and Docker.
 
 ## Project Structure
 
@@ -31,8 +31,15 @@ docker-compose up
 ```
 
 The application will be available at:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:4000
+- Frontend: http://localhost:3001
+- Backend API: http://localhost:4001
+
+## Features
+
+- Local network file sharing
+- Modern React frontend with Tailwind CSS
+- TypeScript support for both frontend and backend
+- Containerized development environment
 
 ## License
 
