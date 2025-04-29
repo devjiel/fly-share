@@ -8,6 +8,7 @@ COPY package*.json ./
 ENV SKIP_PREFLIGHT_CHECK=true
 ENV NODE_ENV=development
 ENV PORT=3001
+ENV HOST=0.0.0.0
 
 RUN npm install
 

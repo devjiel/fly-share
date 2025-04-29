@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   backend:
     build:
@@ -11,6 +13,8 @@ services:
     environment:
       - NODE_ENV=development
     command: npm run dev
+    networks:
+      - app-network
 
   frontend:
     build:
@@ -22,7 +26,14 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - REACT_APP_API_URL=http://localhost:4001
+      - REACT_APP_API_URL=http://backend:4001
+      - HOST=0.0.0.0
     depends_on:
       - backend
-    command: npm start 
+    command: npm start
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 
