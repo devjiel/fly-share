@@ -34,13 +34,6 @@ The application will be available at:
 - Frontend: http://localhost:3001
 - Backend API: http://localhost:4001
 
-## Features
-
-- Local network file sharing
-- Modern React frontend with Tailwind CSS
-- TypeScript support for both frontend and backend
-- Containerized development environment
-
 ## License
 
 MIT 
