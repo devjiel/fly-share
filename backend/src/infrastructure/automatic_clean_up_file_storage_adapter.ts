@@ -7,8 +7,8 @@ import { FileStoragePort } from '../ports/file_storage_port';
 import { FileStorageEvent } from '../ports/events/file_storage_port_event';
 import { FileStorageAdapter } from './file_storage_adapter';
 
-// Default lifetime of files in milliseconds (24 hours)
-const DEFAULT_FILE_TTL = 24 * 60 * 60 * 1000;
+// Default lifetime of files in milliseconds (12 hours)
+const DEFAULT_FILE_TTL = 12 * 60 * 60 * 1000;
 // Default cleanup interval in milliseconds (6 hours)
 const DEFAULT_CLEANUP_INTERVAL = 6 * 60 * 60 * 1000;
 
@@ -65,7 +65,6 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
                     console.log(`Deleting expired file: ${fileInfo.filename} (age: ${fileAge}ms)`);
                     this.fileStorage.deleteFile(fileInfo.filename);
                     deletedCount++;
-                    // The deleteFile method will trigger the FILE_DELETED event from the wrapped adapter
                 }
             }
             
