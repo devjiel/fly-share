@@ -8,9 +8,9 @@ import { FileStorageEvent } from '../ports/events/file_storage_port_event';
 import { FileStorageAdapter } from './file_storage_adapter';
 
 // Default lifetime of files in milliseconds (12 hours)
-const DEFAULT_FILE_TTL = 12 * 60 * 60 * 1000;
+const DEFAULT_FILE_TTL = 12 * 60 * 60 * 1000; // TODO: use dotenv
 // Default cleanup interval in milliseconds (6 hours)
-const DEFAULT_CLEANUP_INTERVAL = 6 * 60 * 60 * 1000;
+const DEFAULT_CLEANUP_INTERVAL = 6 * 60 * 60 * 1000; // TODO: use dotenv
 
 export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements FileStoragePort {
     private fileStorage: FileStorageAdapter;
