@@ -23,6 +23,9 @@ export class ApiController {
 
         // List files endpoint
         this.router.get('/files', this.listFiles.bind(this));
+
+        // Delete file endpoint
+        this.router.delete('/files/:filename', this.deleteFile.bind(this));
     }
 
     /**
@@ -80,5 +83,11 @@ export class ApiController {
      */
     public getRouter(): Router {
         return this.router;
+    }
+
+    private deleteFile(req: Request, res: Response): void {
+        const { filename } = req.params;
+        this.fileService.deleteFile(filename);
+        res.status(204);
     }
 } 
