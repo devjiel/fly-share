@@ -29,4 +29,10 @@ export interface FileStoragePort extends EventEmitter {
      * Fermer le watcher de fichiers
      */
     closeWatcher(): void;
+
+    /**
+     * Delete a file
+     * @param filename File name
+     */
+    deleteFile(filename: string): void;
 } 

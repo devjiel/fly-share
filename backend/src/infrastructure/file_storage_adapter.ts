@@ -125,6 +125,13 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
 
         return filePath;
     }
+
+    public deleteFile(filename: string): void {
+        const filePath = path.join(UPLOAD_DIR, filename);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    }
 }
 
 // Singleton

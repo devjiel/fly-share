@@ -80,6 +80,10 @@ export class FileService {
         return this.storageAdapter.getFiles();
     }
 
+    public deleteFile(filename: string): void {
+        this.storageAdapter.deleteFile(filename);
+    }
+
     public onFileSystemEvent(event: FileEvent, listener: (filename: string) => void): void {
         this.eventEmitter.on(event, listener);
     }
