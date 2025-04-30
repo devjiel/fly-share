@@ -10,10 +10,12 @@
     "test": "jest"
   },
   "dependencies": {
+    "@types/multer": "^1.4.12",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "helmet": "^7.1.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -27,4 +29,4 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
-} 
+}
