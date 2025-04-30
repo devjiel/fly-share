@@ -1,4 +1,5 @@
 import './App.css';
+import FileUploader from './components/FileUploader';
 
 function App() {
   return (
@@ -8,32 +9,20 @@ function App() {
           <h1 className="text-2xl font-bold text-white">Fly-Share</h1>
           <nav>
             <ul className="flex space-x-4">
-              <li><a href="/" className="text-white hover:text-blue-200">Accueil</a></li>
-              <li><a href="/files" className="text-white hover:text-blue-200">Fichiers</a></li>
+              <li><a href="/" className="text-white hover:text-blue-200">Home</a></li>
+              <li><a href="/files" className="text-white hover:text-blue-200">Files</a></li>
             </ul>
           </nav>
         </div>
       </header>
 
       <main className="container mx-auto p-4 mt-8 flex-grow">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Bienvenue sur Fly-Share</h2>
-          <p className="text-gray-700">
-            Une application de partage de fichiers sur votre réseau local.
-          </p>
-          
-          <div className="mt-8 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-lg font-medium mb-2">Glissez vos fichiers ici</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <p className="text-gray-500">Ou cliquez pour sélectionner des fichiers</p>
-            </div>
-          </div>
-        </div>
+        <FileUploader />
       </main>
 
       <footer className="bg-gray-800 text-white p-4 mt-auto">
         <div className="container mx-auto text-center">
-          <p>© 2025 Fly-Share. Tous droits réservés.</p>
+          <p>© 2025 Fly-Share. All rights reserved.</p>
         </div>
       </footer>
     </div>
