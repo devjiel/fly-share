@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { storageService } from './services/storage_service';
+import path from 'path';
 
 const app = express();
 const port = process.env.PORT || 4001;
@@ -25,6 +26,24 @@ app.post('/upload', storageService.handleSingleFileUpload(), (req: Request, res:
     message: 'File uploaded successfully',
     file: fileInfo
   });
+});
+
+// Download endpoint
+app.get('/download/:filename', (req: Request, res: Response) => {
+  const { filename } = req.params;
+  const file = storageService.getFile(filename);
+
+  if (!file) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+
+  res.download(file.toString());
+});
+
+// List files endpoint
+app.get('/files', (req: Request, res: Response) => {
+  const files = storageService.getFiles();
+  res.json(files);
 });
 
 // Start server

@@ -53,6 +53,26 @@ export class StorageService {
             mimetype: req.file.mimetype
         };
     }
+
+    /**
+     * Get all files
+     */
+    public getFiles() {
+        return fs.readdirSync(UPLOAD_DIR);
+    }
+
+    /**
+     * Get file
+     * @param filename Name of the file
+     */
+    public getFile(filename: string) {
+        const filePath = path.join(UPLOAD_DIR, filename);
+        if (!fs.existsSync(filePath)) {
+            return null;
+        }
+
+        return fs.readFileSync(filePath);
+    }
 }
 
 export const storageService = new StorageService();
