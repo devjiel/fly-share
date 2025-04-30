@@ -1,5 +1,6 @@
 import './App.css';
 import FileUploader from './components/FileUploader';
+import FileDownloader from './components/FileDownloader';
 
 function App() {
   return (
@@ -17,7 +18,10 @@ function App() {
       </header>
 
       <main className="container mx-auto p-4 mt-8 flex-grow">
-        <FileUploader />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FileUploader />
+          <FileDownloader />
+        </div>
       </main>
 
       <footer className="bg-gray-800 text-white p-4 mt-auto">
