@@ -29,37 +29,6 @@ export class FileService {
         });
     }
 
-    public onFileSystemEvent(event: FileEvent, listener: (filename: string) => void): void {
-        this.eventEmitter.on(event, listener);
-    }
-
-    public onFileProcessingEvent(
-        event: FileProcessingEvent,
-        listener: (data: { filename: string, fileInfo?: FileInfo, error?: string }) => void
-    ): void {
-        this.eventEmitter.on(event, listener);
-    }
-
-    public emitFileProcessingStarted(filename: string): void {
-        this.eventEmitter.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, { filename });
-    }
-
-    public emitFileProcessingCompleted(filename: string, fileInfo: FileInfo): void {
-        this.eventEmitter.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename, fileInfo });
-    }
-
-    public emitFileProcessingError(filename: string, error: string): void {
-        this.eventEmitter.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename, error });
-    }
-
-    public removeAllListeners(): void {
-        this.eventEmitter.removeAllListeners();
-    }
-
-    public getUploadMiddleware() {
-        return this.storageAdapter.handleSingleFileUpload();
-    }
-
     /**
      * Handle the upload of a single file
      * @param req Express request
@@ -68,27 +37,27 @@ export class FileService {
     public async processFileUpload(req: Request): Promise<FileInfo | null> {
         const originalFilename = req.file?.originalname || 'Unknown file';
 
-        this.emitFileProcessingStarted(originalFilename);
+        this.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, { filename: originalFilename });
 
         try {            // Vérifier que le fichier a bien été uploadé
             if (!req.file) {
-                this.emitFileProcessingError(originalFilename, 'No file uploaded');
+                this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'No file uploaded' });
                 return null;
             }
 
             const fileInfo = this.storageAdapter.getFileInfo(req);
 
             if (!fileInfo) {
-                this.emitFileProcessingError(originalFilename, 'Failed to process file information');
+                this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'Failed to process file information' });
                 return null;
             }
 
-            this.emitFileProcessingCompleted(originalFilename, fileInfo);
+            this.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename: originalFilename, fileInfo });
 
             return fileInfo;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error during file processing';
-            this.emitFileProcessingError(originalFilename, errorMessage);
+            this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: errorMessage });
 
             throw error;
         }
@@ -109,6 +78,25 @@ export class FileService {
      */
     public getFilesList(): FileInfo[] {
         return this.storageAdapter.getFiles();
+    }
+
+    public onFileSystemEvent(event: FileEvent, listener: (filename: string) => void): void {
+        this.eventEmitter.on(event, listener);
+    }
+
+    public onFileProcessingEvent(
+        event: FileProcessingEvent,
+        listener: (data: { filename: string, fileInfo?: FileInfo, error?: string }) => void
+    ): void {
+        this.eventEmitter.on(event, listener);
+    }
+
+    private emit(event: FileProcessingEvent, data: { filename: string, fileInfo?: FileInfo, error?: string }): void {
+        this.eventEmitter.emit(event, data);
+    }
+
+    public getUploadMiddleware() {
+        return this.storageAdapter.handleSingleFileUpload();
     }
 
     public closeWatcher(): void {
