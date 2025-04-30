@@ -43,7 +43,12 @@ For ecological reasons, the application automatically deletes files after a spec
    - Files are automatically deleted after 12 hours
    - Cleanup occurs every 6 hours
 
-2. **Custom Configuration**:
+2. **Ecological Optimization**:
+   - The cleanup scheduler automatically stops when there are no files to save resources
+   - The scheduler restarts automatically when new files are uploaded
+   - This reduces unnecessary system resource usage when the system is idle
+
+3. **Custom Configuration**:
    ```typescript
    // Create a decorator with custom settings (3 days TTL, check every hour)
    const autoCleanStorage = new AutomaticCleanUpFileStorageAdapter(
@@ -53,9 +58,16 @@ For ecological reasons, the application automatically deletes files after a spec
    
    // Change TTL settings after initialization
    autoCleanStorage.setFileTTL(7 * 24 * 60 * 60 * 1000); // 7 days
+   
+   // Check if the scheduler is running
+   const isActive = autoCleanStorage.getCleanupSchedulerStatus();
+   
+   // Manually control the scheduler if needed
+   autoCleanStorage.forceStopScheduler();
+   autoCleanStorage.forceStartScheduler();
    ```
 
-3. **Manual Cleanup**:
+4. **Manual Cleanup**:
    ```typescript
    // Trigger cleanup manually
    const deletedCount = autoCleanStorage.cleanupExpiredFiles();
@@ -120,6 +132,8 @@ fly-share/
    - **Decorator Pattern**: Uses composition to add file cleanup functionality to the storage adapter
    - **Configurable TTL**: Time-to-live settings for files can be configured (default: 24 hours)
    - **Scheduled Cleanup**: Periodically checks and removes expired files (default: every 6 hours)
+   - **Resource Optimization**: Automatically pauses the cleanup scheduler when no files exist
+   - **Event-Driven Activation**: Listens for file uploads to restart the scheduler when needed
    - **Event Notification**: Cleanup operations emit events that propagate through the system
 
 6. **Clear Separation of Event Types**:
