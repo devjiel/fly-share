@@ -3,11 +3,11 @@ import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
 import { FileItem } from '../models/files';
 
-
 const FileDownloader: React.FC = () => {
     const [files, setFiles] = useState<FileItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
 
     useEffect(() => {
         fetchFiles();
@@ -17,14 +17,16 @@ const FileDownloader: React.FC = () => {
         try {
             setLoading(true);
             const response = await axios.get('http://localhost:4001/files');
-            const fileNames = response.data;
+            const files = response.data;
 
-            // Transform file names into FileItem objects
-            const fileItems: FileItem[] = fileNames.map((filename: string) => {
+            const fileItems: FileItem[] = files.map((file: any /* TODO */) => {
+
+                console.log(file);
                 return {
-                    filename: filename.split('-').slice(2).join('-'), // Remove unique prefix to show original filename
-                    size: 0, // Size will be shown as 0 since we don't have it from the API
-                    url: `http://localhost:4001/download/${filename}`
+                    filename: file.filename,
+                    displayName: file.displayName,
+                    size: file.size,
+                    url: `http://localhost:4001/download/${file.filename}`
                 };
             });
 
@@ -38,14 +40,34 @@ const FileDownloader: React.FC = () => {
         }
     };
 
-    const handleDownload = (url: string, filename: string) => {
-        // Create a temporary link element
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handleDownload = async (file: FileItem) => {
+        try {
+            setDownloadingFile(file.filename);
+
+            const response = await axios.get(
+                file.url,
+                {
+                    responseType: 'blob'
+                }
+            );
+
+            const blob = new Blob([response.data]);
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', file.displayName || file.filename);
+            document.body.appendChild(link);
+            link.click();
+
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Error downloading file:', error);
+            setError('Failed to download file. Please try again later.');
+        } finally {
+            setDownloadingFile(null);
+        }
     };
 
     return (
@@ -79,7 +101,7 @@ const FileDownloader: React.FC = () => {
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-900 truncate">
-                                            {file.filename}
+                                            {file.displayName}
                                         </p>
                                         {file.size > 0 && (
                                             <p className="text-sm text-gray-500">
@@ -88,10 +110,11 @@ const FileDownloader: React.FC = () => {
                                         )}
                                     </div>
                                     <button
-                                        onClick={() => handleDownload(file.url, file.filename)}
-                                        className="ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                        onClick={() => handleDownload(file)}
+                                        disabled={downloadingFile === file.filename}
+                                        className="ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
                                     >
-                                        Download
+                                        {downloadingFile === file.filename ? 'Downloading...' : 'Download'}
                                     </button>
                                 </div>
                             </li>

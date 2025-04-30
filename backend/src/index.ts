@@ -31,13 +31,13 @@ app.post('/upload', storageService.handleSingleFileUpload(), (req: Request, res:
 // Download endpoint
 app.get('/download/:filename', (req: Request, res: Response) => {
   const { filename } = req.params;
-  const file = storageService.getFile(filename);
+  const filePath = storageService.getFile(filename);
 
-  if (!file) {
+  if (!filePath) {
     return res.status(404).json({ error: 'File not found' });
   }
 
-  res.download(file.toString());
+  res.download(filePath);
 });
 
 // List files endpoint

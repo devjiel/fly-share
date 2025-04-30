@@ -18,9 +18,9 @@ function App() {
       </header>
 
       <main className="container mx-auto p-4 mt-8 flex-grow">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FileUploader />
+        <div className="grid grid-cols-1 gap-8 w-full">
           <FileDownloader />
+          <FileUploader />
         </div>
       </main>
 
