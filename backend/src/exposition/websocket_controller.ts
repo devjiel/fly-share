@@ -1,21 +1,29 @@
 import { Server, Socket } from 'socket.io';
-import { FileEvent, FileInfo } from 'fly-share-api';
+import { FileInfo, FileEvent } from 'fly-share-api';
 import { storageService, FileChangeEvent } from '../services/storage_service';
+import { FileService, FileProcessingEvent } from '../services/file_service';
 
 export class WebSocketController {
     private io: Server;
+    private fileService: FileService;
 
-    constructor(io: Server) {
+    constructor(io: Server, fileService: FileService) {
         this.io = io;
+        this.fileService = fileService;
     }
 
     public init(): void {
         this.io.on('connection', this.handleConnection.bind(this));
 
-        // Abonnement aux événements du service de stockage
+        // Subscribe to storage events
         storageService.on(FileChangeEvent.ADDED, this.handleFileAdded.bind(this));
         storageService.on(FileChangeEvent.DELETED, this.handleFileDeleted.bind(this));
         storageService.on(FileChangeEvent.UPDATED, this.handleFileChanged.bind(this));
+
+        // Subscribe to file processing events
+        this.fileService.on(FileProcessingEvent.PROCESSING_STARTED, this.handleFileProcessingStarted.bind(this));
+        this.fileService.on(FileProcessingEvent.PROCESSING_COMPLETED, this.handleFileProcessingCompleted.bind(this));
+        this.fileService.on(FileProcessingEvent.PROCESSING_ERROR, this.handleFileProcessingError.bind(this));
     }
 
     /**
@@ -70,5 +78,29 @@ export class WebSocketController {
     private handleFileChanged(filename: string): void {
         console.log(`WebSocketService: File changed notification: ${filename}`);
         this.broadcastFilesList();
+    }
+
+    /**
+     * Handle file processing started event
+     */
+    private handleFileProcessingStarted(data: { filename: string }): void {
+        console.log(`WebSocketService: File processing started: ${data.filename}`);
+        this.io.emit('file-processing-started', data);
+    }
+
+    /**
+     * Handle file processing completed event
+     */
+    private handleFileProcessingCompleted(data: { filename: string, fileInfo: FileInfo }): void {
+        console.log(`WebSocketService: File processing completed: ${data.filename}`);
+        this.io.emit('file-processing-completed', data);
+    }
+
+    /**
+     * Handle file processing error event
+     */
+    private handleFileProcessingError(data: { filename: string, error: string }): void {
+        console.log(`WebSocketService: File processing error: ${data.filename}, Error: ${data.error}`);
+        this.io.emit('file-processing-error', data);
     }
 } 

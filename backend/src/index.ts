@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { WebSocketController } from './exposition/websocket_controller';
 import { ApiController } from './exposition/api_controller';
+import { FileService } from './services/file_service';
 
 const app = express();
 const port = process.env.PORT || 4001;
@@ -22,22 +23,26 @@ const io = new Server(httpServer, {
   }
 });
 
-// Initialize WebSocket service
-const webSocketController = new WebSocketController(io);
-webSocketController.init();
-
-// Expose io instance
-export { io };
-
 // Middleware
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Initialize API controller
-const apiController = new ApiController(storageService);
+// Initialize services (ordre important pour les dépendances)
+// 1. File service (émetteur d'événements)
+const fileService = new FileService(storageService);
+
+// 2. WebSocket controller (écouteur d'événements)
+const webSocketController = new WebSocketController(io, fileService);
+webSocketController.init();
+
+// 3. API controller
+const apiController = new ApiController(fileService);
 app.use('/', apiController.getRouter());
+
+// Expose io instance
+export { io };
 
 // Start server
 httpServer.listen(port, () => {
