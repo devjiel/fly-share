@@ -48,8 +48,13 @@ fly-share/
 │   │   ├── exposition/      # Controllers for external interfaces
 │   │   │   ├── api_controller.ts    # REST API endpoint handling
 │   │   │   └── websocket_controller.ts  # WebSocket event handling
-│   │   ├── services/
-│   │   │   ├── storage_service.ts   # Low-level file storage operations
+│   │   ├── ports/           # Interfaces defining the contracts between layers
+│   │   │   ├── events/      # Event definitions for different layers
+│   │   │   │   └── file_storage_port_event.ts  # Storage-related events
+│   │   │   └── file_storage_port.ts # Storage port interface
+│   │   ├── infrastructure/  # Implementation of low-level interfaces
+│   │   │   └── file_storage_adapter.ts # File system adapter
+│   │   ├── services/        # Business logic layer
 │   │   │   └── file_service.ts      # Business logic for file operations
 │   │   └── index.ts         # Application entry point
 │   ├── uploads/             # Directory for stored files
@@ -79,23 +84,34 @@ fly-share/
 
 3. **Shared Types**: Common type definitions and event constants are extracted into a shared package to ensure consistency between frontend and backend.
 
-4. **Event-Driven Architecture**: The application uses a comprehensive event system:
-   - Services emit events when operations occur (file uploads, processing, errors)
-   - Controllers subscribe to these events and react accordingly
-   - This creates a loosely coupled system where components communicate through events
+4. **Ports and Adapters Architecture**: The application implements a hexagonal architecture:
+   - **Ports**: Define interfaces for different capabilities (file storage, events)
+   - **Adapters**: Provide concrete implementations of these interfaces
+   - This allows for easy substitution of implementations and better testability
 
-5. **Layered Architecture**:
+5. **Clear Separation of Event Types**:
+   - **FileEvent**: Client-facing events shared between frontend and backend
+   - **FileStorageEvent**: Internal events for file system changes
+   - **FileProcessingEvent**: Events related to file processing operations
+
+6. **Event-Driven Architecture**: The application uses a comprehensive event system:
+   - Infrastructure components emit low-level events (file added, deleted, updated)
+   - Services translate these to domain events and add business logic
+   - Controllers subscribe to domain events and communicate with clients
+   - This creates a loosely coupled system where components interact through well-defined events
+
+7. **Layered Architecture**:
    - **Exposition Layer**: Controllers (API, WebSocket) handle external communication
    - **Service Layer**: Business logic and domain operations
-   - **Storage Layer**: Low-level file system operations
+   - **Infrastructure Layer**: Low-level file system operations and adapters
 
-6. **Real-time Updates with WebSockets**: The application uses Socket.IO to provide real-time updates for all file operations.
+8. **Real-time Updates with WebSockets**: The application uses Socket.IO to provide real-time updates for all file operations.
 
-7. **File System Monitoring**: The backend utilizes Chokidar to watch for file system changes, enabling detection of files that might be added outside the application.
+9. **File System Monitoring**: The backend utilizes Chokidar to watch for file system changes, enabling detection of files that might be added outside the application.
 
-8. **Clean UI with Tailwind CSS**: The frontend uses Tailwind CSS for rapid UI development with a clean, modern aesthetic.
+10. **Clean UI with Tailwind CSS**: The frontend uses Tailwind CSS for rapid UI development with a clean, modern aesthetic.
 
-9. **Containerization**: Docker and Docker Compose are used for consistent development environments and simplified deployment.
+11. **Containerization**: Docker and Docker Compose are used for consistent development environments and simplified deployment.
 
 ### WebSocket Implementation
 
@@ -106,14 +122,16 @@ The application uses WebSockets to provide real-time updates to all connected cl
 2. **File Operation Events**: The backend emits events for various file operations:
    - `FILES_CHANGED`: When the file list is updated
 
-3. **File System Monitoring**: The storage service monitors the file system for changes and emits events when:
-   - A new file is added
-   - A file is deleted
-   - A file is modified
+3. **File System Monitoring**: The storage adapter monitors the file system for changes and emits events when:
+   - A new file is added (`FILE_ADDED`)
+   - A file is deleted (`FILE_DELETED`)
+   - A file is modified (`FILE_UPDATED`)
 
-4. **Event Broadcasting**: All connected clients receive real-time updates simultaneously, ensuring a consistent view for all users.
+4. **Event Translation**: The file service translates these low-level events into business domain events and provides methods for accessing file data.
 
-5. **Resilient Connections**: Socket.IO handles reconnection logic automatically, providing a robust experience even with unstable connections.
+5. **Event Broadcasting**: All connected clients receive real-time updates simultaneously, ensuring a consistent view for all users.
+
+6. **Resilient Connections**: Socket.IO handles reconnection logic automatically, providing a robust experience even with unstable connections.
 
 This real-time functionality creates a seamless user experience and ensures all users have up-to-date information without requiring manual page refreshes.
 

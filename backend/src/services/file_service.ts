@@ -1,108 +1,117 @@
 import { Request } from 'express';
-import { FileInfo } from 'fly-share-api';
-import { StorageService } from './storage_service';
+import { FileEvent, FileInfo, FileProcessingEvent } from 'fly-share-api';
 import EventEmitter from 'events';
+import { FileStoragePort } from '../ports/file_storage_port';
+import { FileStorageEvent } from '../ports/events/file_storage_port_event';
 
-/**
- * Événements émis par le service de fichiers
- */
-export enum FileProcessingEvent {
-    PROCESSING_STARTED = 'file-processing-started',
-    PROCESSING_COMPLETED = 'file-processing-completed',
-    PROCESSING_ERROR = 'file-processing-error'
-}
+export class FileService {
+    private storageAdapter: FileStoragePort;
+    private eventEmitter: EventEmitter;
 
-/**
- * Service de gestion des fichiers
- * Intermédiaire entre les contrôleurs API et le service de stockage
- */
-export class FileService extends EventEmitter {
-    private storageService: StorageService;
+    constructor(storageAdapter: FileStoragePort) {
+        this.storageAdapter = storageAdapter;
+        this.eventEmitter = new EventEmitter();
 
-    constructor(storageService: StorageService) {
-        super();
-        this.storageService = storageService;
+        this.setupInfrastructureEventListeners();
     }
 
-    /**
-     * Retourne le middleware pour le téléversement d'un seul fichier
-     */
+    private setupInfrastructureEventListeners(): void {
+        this.storageAdapter.on(FileStorageEvent.FILE_ADDED, (filename: string) => {
+            this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
+        });
+
+        this.storageAdapter.on(FileStorageEvent.FILE_DELETED, (filename: string) => {
+            this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
+        });
+
+        this.storageAdapter.on(FileStorageEvent.FILE_UPDATED, (filename: string) => {
+            this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
+        });
+    }
+
+    public onFileSystemEvent(event: FileEvent, listener: (filename: string) => void): void {
+        this.eventEmitter.on(event, listener);
+    }
+
+    public onFileProcessingEvent(
+        event: FileProcessingEvent,
+        listener: (data: { filename: string, fileInfo?: FileInfo, error?: string }) => void
+    ): void {
+        this.eventEmitter.on(event, listener);
+    }
+
+    public emitFileProcessingStarted(filename: string): void {
+        this.eventEmitter.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, { filename });
+    }
+
+    public emitFileProcessingCompleted(filename: string, fileInfo: FileInfo): void {
+        this.eventEmitter.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename, fileInfo });
+    }
+
+    public emitFileProcessingError(filename: string, error: string): void {
+        this.eventEmitter.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename, error });
+    }
+
+    public removeAllListeners(): void {
+        this.eventEmitter.removeAllListeners();
+    }
+
     public getUploadMiddleware() {
-        return this.storageService.handleSingleFileUpload();
+        return this.storageAdapter.handleSingleFileUpload();
     }
 
     /**
-     * Traite le téléversement d'un fichier
-     * @param req Requête Express
-     * @returns Informations sur le fichier téléversé ou null en cas d'erreur
+     * Handle the upload of a single file
+     * @param req Express request
+     * @returns File information or null if there is an error
      */
     public async processFileUpload(req: Request): Promise<FileInfo | null> {
-        // Récupérer le nom original du fichier pour la notification
         const originalFilename = req.file?.originalname || 'Unknown file';
 
-        // Émettre l'événement de début de traitement
-        this.emit(FileProcessingEvent.PROCESSING_STARTED, { filename: originalFilename });
+        this.emitFileProcessingStarted(originalFilename);
 
-        try {
-            // Vérifier que le fichier a bien été uploadé
+        try {            // Vérifier que le fichier a bien été uploadé
             if (!req.file) {
-                this.emit(FileProcessingEvent.PROCESSING_ERROR, {
-                    filename: originalFilename,
-                    error: 'No file uploaded'
-                });
+                this.emitFileProcessingError(originalFilename, 'No file uploaded');
                 return null;
             }
 
-            // Vérifications supplémentaires pourraient être ajoutées ici:
-            // - Validation du type de fichier
-            // - Vérification de la taille
-            // - Scan antivirus
-            // - etc.
-
-            // Récupérer les informations du fichier
-            const fileInfo = this.storageService.getFileInfo(req);
+            const fileInfo = this.storageAdapter.getFileInfo(req);
 
             if (!fileInfo) {
-                this.emit(FileProcessingEvent.PROCESSING_ERROR, {
-                    filename: originalFilename,
-                    error: 'Failed to process file information'
-                });
+                this.emitFileProcessingError(originalFilename, 'Failed to process file information');
                 return null;
             }
 
-            // Émettre l'événement de fin de traitement avec succès
-            this.emit(FileProcessingEvent.PROCESSING_COMPLETED, {
-                filename: originalFilename,
-                fileInfo
-            });
+            this.emitFileProcessingCompleted(originalFilename, fileInfo);
 
             return fileInfo;
         } catch (error) {
-            // Gestion des erreurs
             const errorMessage = error instanceof Error ? error.message : 'Unknown error during file processing';
-            this.emit(FileProcessingEvent.PROCESSING_ERROR, {
-                filename: originalFilename,
-                error: errorMessage
-            });
+            this.emitFileProcessingError(originalFilename, errorMessage);
 
-            throw error; // Propager l'erreur pour la gestion dans le contrôleur
+            throw error;
         }
     }
 
     /**
-     * Récupère le chemin complet d'un fichier
-     * @param filename Nom du fichier
-     * @returns Chemin complet ou null si le fichier n'existe pas
+     * Get the full path of a file
+     * @param filename File name
+     * @returns Full path or null if the file does not exist
      */
     public getFilePath(filename: string): string | null {
-        return this.storageService.getFile(filename);
+        return this.storageAdapter.getFile(filename);
     }
 
     /**
-     * Récupère la liste des fichiers disponibles
-     * @returns Liste des fichiers
+     * Get the list of available files
+     * @returns List of files
      */
     public getFilesList(): FileInfo[] {
-        return this.storageService.getFiles();
+        return this.storageAdapter.getFiles();
+    }
+
+    public closeWatcher(): void {
+        this.storageAdapter.closeWatcher();
     }
 } 

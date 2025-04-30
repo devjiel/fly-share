@@ -1,8 +1,10 @@
 import { Server, Socket } from 'socket.io';
-import { FileInfo, FileEvent } from 'fly-share-api';
-import { storageService, FileChangeEvent } from '../services/storage_service';
-import { FileService, FileProcessingEvent } from '../services/file_service';
+import { FileInfo, FileProcessingEvent, FileEvent } from 'fly-share-api';
+import { FileService } from '../services/file_service';
 
+/**
+ * WebSocket controller for real-time communication
+ */
 export class WebSocketController {
     private io: Server;
     private fileService: FileService;
@@ -12,27 +14,37 @@ export class WebSocketController {
         this.fileService = fileService;
     }
 
+    /**
+     * Initialize the WebSocket controller
+     */
     public init(): void {
         this.io.on('connection', this.handleConnection.bind(this));
 
-        // Subscribe to storage events
-        storageService.on(FileChangeEvent.ADDED, this.handleFileAdded.bind(this));
-        storageService.on(FileChangeEvent.DELETED, this.handleFileDeleted.bind(this));
-        storageService.on(FileChangeEvent.UPDATED, this.handleFileChanged.bind(this));
+        // Subscribe to file system events
+        this.fileService.onFileSystemEvent(FileEvent.FILES_CHANGED, this.handleFileChanged.bind(this));
 
         // Subscribe to file processing events
-        this.fileService.on(FileProcessingEvent.PROCESSING_STARTED, this.handleFileProcessingStarted.bind(this));
-        this.fileService.on(FileProcessingEvent.PROCESSING_COMPLETED, this.handleFileProcessingCompleted.bind(this));
-        this.fileService.on(FileProcessingEvent.PROCESSING_ERROR, this.handleFileProcessingError.bind(this));
+        this.fileService.onFileProcessingEvent(
+            FileProcessingEvent.FILE_PROCESSING_STARTED,
+            this.handleFileProcessingStarted.bind(this)
+        );
+        this.fileService.onFileProcessingEvent(
+            FileProcessingEvent.FILE_PROCESSING_COMPLETED,
+            this.handleFileProcessingCompleted.bind(this)
+        );
+        this.fileService.onFileProcessingEvent(
+            FileProcessingEvent.FILE_PROCESSING_ERROR,
+            this.handleFileProcessingError.bind(this)
+        );
     }
 
     /**
-     * Handle a new client connection
+     * Handle new client connection
      */
     private handleConnection(socket: Socket): void {
         console.log('Client connected:', socket.id);
 
-        // Send initial files list to the new client
+        // Send initial file list to the new client
         this.sendFilesList(socket);
 
         socket.on('disconnect', () => {
@@ -41,35 +53,19 @@ export class WebSocketController {
     }
 
     /**
-     * Send the list of files to a specific client
+     * Send the file list to a specific client
      */
     private sendFilesList(socket: Socket): void {
-        const files = storageService.getFiles();
+        const files = this.fileService.getFilesList();
         socket.emit(FileEvent.FILES_CHANGED, files);
     }
 
     /**
-     * Notify all clients when the list of files changes
+     * Notify all clients when the file list changes
      */
     private broadcastFilesList(): void {
-        const files = storageService.getFiles();
+        const files = this.fileService.getFilesList();
         this.io.emit(FileEvent.FILES_CHANGED, files);
-    }
-
-    /**
-     * Handle file added event
-     */
-    private handleFileAdded(filename: string): void {
-        console.log(`WebSocketService: File added notification: ${filename}`);
-        this.broadcastFilesList();
-    }
-
-    /**
-     * Handle file deleted event
-     */
-    private handleFileDeleted(filename: string): void {
-        console.log(`WebSocketService: File deleted notification: ${filename}`);
-        this.broadcastFilesList();
     }
 
     /**
@@ -85,22 +81,30 @@ export class WebSocketController {
      */
     private handleFileProcessingStarted(data: { filename: string }): void {
         console.log(`WebSocketService: File processing started: ${data.filename}`);
-        this.io.emit('file-processing-started', data);
+        this.io.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, data);
     }
 
     /**
      * Handle file processing completed event
      */
-    private handleFileProcessingCompleted(data: { filename: string, fileInfo: FileInfo }): void {
+    private handleFileProcessingCompleted(data: { filename: string; fileInfo?: FileInfo }): void {
+        if (!data.fileInfo) {
+            console.log(`WebSocketService: File processing completed without fileInfo: ${data.filename}`);
+            return;
+        }
+
         console.log(`WebSocketService: File processing completed: ${data.filename}`);
-        this.io.emit('file-processing-completed', data);
+        this.io.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, data);
+
+        // Broadcast updated file list
+        this.broadcastFilesList();
     }
 
     /**
      * Handle file processing error event
      */
-    private handleFileProcessingError(data: { filename: string, error: string }): void {
-        console.log(`WebSocketService: File processing error: ${data.filename}, Error: ${data.error}`);
-        this.io.emit('file-processing-error', data);
+    private handleFileProcessingError(data: { filename: string; error?: string }): void {
+        console.log(`WebSocketService: File processing error: ${data.filename}, Error: ${data.error || 'Unknown error'}`);
+        this.io.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, data);
     }
 } 

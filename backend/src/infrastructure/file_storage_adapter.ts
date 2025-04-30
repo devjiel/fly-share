@@ -5,6 +5,8 @@ import { Request } from 'express';
 import { FileInfo } from 'fly-share-api';
 import * as chokidar from 'chokidar';
 import EventEmitter from 'events';
+import { FileStoragePort } from '../ports/file_storage_port';
+import { FileStorageEvent } from '../ports/events/file_storage_port_event';
 
 const UPLOAD_DIR = path.join(__dirname, '../../uploads');
 
@@ -24,15 +26,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// File change events
-export enum FileChangeEvent {
-    ADDED = 'added',
-    DELETED = 'deleted',
-    UPDATED = 'updated',
-    FILES_CHANGED = 'files-changed'
-}
-
-export class StorageService extends EventEmitter {
+export class FileStorageAdapter extends EventEmitter implements FileStoragePort {
     private watcher: chokidar.FSWatcher | null = null;
 
     constructor() {
@@ -52,17 +46,17 @@ export class StorageService extends EventEmitter {
             .on('add', (filepath: string) => {
                 console.log(`File ${filepath} has been added`);
                 const filename = this.getFilenameFromPath(filepath);
-                this.emit(FileChangeEvent.ADDED, filename);
+                this.emit(FileStorageEvent.FILE_ADDED, filename);
             })
             .on('unlink', (filepath: string) => {
                 console.log(`File ${filepath} has been removed`);
                 const filename = this.getFilenameFromPath(filepath);
-                this.emit(FileChangeEvent.DELETED, filename);
+                this.emit(FileStorageEvent.FILE_DELETED, filename);
             })
             .on('change', (filepath: string) => {
                 console.log(`File ${filepath} has been changed`);
                 const filename = this.getFilenameFromPath(filepath);
-                this.emit(FileChangeEvent.UPDATED, filename);
+                this.emit(FileStorageEvent.FILE_UPDATED, filename);
             })
             .on('ready', () => {
                 console.log('Initial scan complete. Ready for changes.');
@@ -76,9 +70,6 @@ export class StorageService extends EventEmitter {
         return path.basename(filePath);
     }
 
-    /**
-     * Close file watcher
-     */
     public closeWatcher() {
         if (this.watcher) {
             this.watcher.close();
@@ -86,18 +77,10 @@ export class StorageService extends EventEmitter {
         }
     }
 
-    /**
-     * Single file upload
-     * @param fieldName Name of the form field
-     */
     public handleSingleFileUpload() {
         return upload.single('file');
     }
 
-    /**
-     * Get uploaded file info
-     * @param req Express request with the file
-     */
     public getFileInfo(req: Request): FileInfo | null {
         if (!req.file) {
             return null;
@@ -113,9 +96,6 @@ export class StorageService extends EventEmitter {
         };
     }
 
-    /**
-     * Get all files
-     */
     public getFiles(): FileInfo[] {
         try {
             const files = fs.readdirSync(UPLOAD_DIR);
@@ -127,7 +107,7 @@ export class StorageService extends EventEmitter {
                     filename: file,
                     displayName: file.split('-').slice(2).join('-') || file,
                     size: stats.size,
-                    url: `http://localhost:4001/download/${file}`, // TODO: do not use hardcoded url
+                    url: `http://localhost:4001/download/${file}`,
                     mimetype: 'application/octet-stream',
                     date: stats.birthtime
                 };
@@ -137,12 +117,7 @@ export class StorageService extends EventEmitter {
             return [];
         }
     }
-
-    /**
-     * Get file
-     * @param filename Name of the file
-     */
-    public getFile(filename: string) {
+    public getFile(filename: string): string | null {
         const filePath = path.join(UPLOAD_DIR, filename);
         if (!fs.existsSync(filePath)) {
             return null;
@@ -152,4 +127,5 @@ export class StorageService extends EventEmitter {
     }
 }
 
-export const storageService = new StorageService();
+// Singleton
+export const fileStorageAdapter = new FileStorageAdapter(); 
