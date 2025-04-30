@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { FileInfo } from 'fly-share-api';
+import { FileEvent, FileInfo } from 'fly-share-api';
 import { storageService, FileChangeEvent } from '../services/storage_service';
 
 export class WebSocketController {
@@ -37,7 +37,7 @@ export class WebSocketController {
      */
     private sendFilesList(socket: Socket): void {
         const files = storageService.getFiles();
-        socket.emit('files-updated', files);
+        socket.emit(FileEvent.FILES_CHANGED, files);
     }
 
     /**
@@ -45,7 +45,7 @@ export class WebSocketController {
      */
     private broadcastFilesList(): void {
         const files = storageService.getFiles();
-        this.io.emit('files-updated', files);
+        this.io.emit(FileEvent.FILES_CHANGED, files);
     }
 
     /**
@@ -70,13 +70,5 @@ export class WebSocketController {
     private handleFileChanged(filename: string): void {
         console.log(`WebSocketService: File changed notification: ${filename}`);
         this.broadcastFilesList();
-    }
-
-    /**
-     * Handle files list changed event
-     */
-    private handleFilesChanged(files: FileInfo[]): void {
-        console.log('WebSocketService: Files list changed, broadcasting to all clients');
-        this.io.emit('files-updated', files);
     }
 } 

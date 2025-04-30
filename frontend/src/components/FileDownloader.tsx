@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
-import { FileInfo } from 'fly-share-api';
+import { FileEvent, FileInfo } from 'fly-share-api';
 import { io, Socket } from 'socket.io-client';
 
 const FileDownloader: React.FC = () => {
     const [files, setFiles] = useState<FileInfo[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
-    const [socket, setSocket] = useState<Socket | null>(null);
 
     useEffect(() => {
         // Connect to WebSocket server
         const socketInstance = io('http://localhost:4001');
-        setSocket(socketInstance);
 
         // Listen for file updates
-        socketInstance.on('files-updated', (updatedFiles: FileInfo[]) => {
+        socketInstance.on(FileEvent.FILES_CHANGED, (updatedFiles: FileInfo[]) => {
             console.log('Received updated files via WebSocket:', updatedFiles);
             setFiles(updatedFiles);
         });
@@ -50,7 +47,6 @@ const FileDownloader: React.FC = () => {
 
     const handleDownload = async (file: FileInfo) => {
         try {
-            setDownloadingFile(file.filename);
 
             const response = await axios.get(
                 file.url,
@@ -73,8 +69,6 @@ const FileDownloader: React.FC = () => {
         } catch (error) {
             console.error('Error downloading file:', error);
             setError('Failed to download file. Please try again later.');
-        } finally {
-            setDownloadingFile(null);
         }
     };
 
