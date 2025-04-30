@@ -1,6 +1,7 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface UploadedFile {
     filename: string;
@@ -13,15 +14,14 @@ const FileUploader: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
-    const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
             setError(null);
-            setUploadedFile(null);
+            await handleUpload(e.target.files[0]);
         }
     };
 
@@ -29,22 +29,17 @@ const FileUploader: React.FC = () => {
         e.preventDefault();
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
 
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             setFile(e.dataTransfer.files[0]);
             setError(null);
-            setUploadedFile(null);
+            await handleUpload(e.dataTransfer.files[0]);
         }
     };
 
-    const handleUpload = async () => {
-        if (!file) {
-            setError("Please select a file");
-            return;
-        }
-
+    const handleUpload = async (file: File) => {
         setIsUploading(true);
         setUploadProgress(0);
         setError(null);
@@ -53,7 +48,7 @@ const FileUploader: React.FC = () => {
         formData.append('file', file);
 
         try {
-            const response = await axios.post('http://localhost:4001/upload', formData, {
+            await axios.post('http://localhost:4001/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
@@ -65,7 +60,15 @@ const FileUploader: React.FC = () => {
                 }
             });
 
-            setUploadedFile(response.data.file);
+            toast.success('File sent successfully', {
+                duration: 2500,
+                position: 'top-right',
+                style: {
+                    background: '#4ade80',
+                    color: '#fff'
+                }
+            });
+
             setFile(null);
 
             if (fileInputRef.current) {
@@ -84,6 +87,7 @@ const FileUploader: React.FC = () => {
 
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
+            <Toaster />
             <h2 className="text-xl font-semibold mb-4">Upload a file</h2>
 
             <div
@@ -107,22 +111,9 @@ const FileUploader: React.FC = () => {
                 ) : (
                     <div>
                         <p className="text-gray-500">Drag and drop your file here or click to select</p>
-                        <p className="text-gray-400 text-sm mt-1">Share your files on your local network</p>
                     </div>
                 )}
             </div>
-
-            {file && (
-                <div className="mt-4">
-                    <button
-                        onClick={handleUpload}
-                        disabled={isUploading}
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300 transition w-full"
-                    >
-                        {isUploading ? 'Uploading...' : 'Upload'}
-                    </button>
-                </div>
-            )}
 
             {isUploading && (
                 <div className="mt-4">
@@ -139,17 +130,6 @@ const FileUploader: React.FC = () => {
             {error && (
                 <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
                     {error}
-                </div>
-            )}
-
-            {uploadedFile && (
-                <div className="mt-4 p-4 bg-green-50 rounded-md">
-                    <h3 className="text-green-700 font-medium">File uploaded successfully!</h3>
-                    <div className="mt-2">
-                        <p className="text-sm"><span className="font-medium">Name:</span> {uploadedFile.filename}</p>
-                        <p className="text-sm"><span className="font-medium">Size:</span> {formatFileSize(uploadedFile.size)}</p>
-                        <p className="text-sm"><span className="font-medium">Type:</span> {uploadedFile.mimetype}</p>
-                    </div>
                 </div>
             )}
         </div>
