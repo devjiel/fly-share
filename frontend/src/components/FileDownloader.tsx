@@ -1,16 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
-import { FileItem } from '../models/files';
+import { FileInfo } from 'fly-share-api';
+import { io, Socket } from 'socket.io-client';
 
 const FileDownloader: React.FC = () => {
-    const [files, setFiles] = useState<FileItem[]>([]);
+    const [files, setFiles] = useState<FileInfo[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
 
     useEffect(() => {
+        // Connect to WebSocket server
+        const socketInstance = io('http://localhost:4001');
+        setSocket(socketInstance);
+
+        // Listen for file updates
+        socketInstance.on('files-updated', (updatedFiles: FileInfo[]) => {
+            console.log('Received updated files via WebSocket:', updatedFiles);
+            setFiles(updatedFiles);
+        });
+
+        // Initial fetch
         fetchFiles();
+
+        // Cleanup on unmount
+        return () => {
+            socketInstance.disconnect();
+        };
     }, []);
 
     const fetchFiles = async () => {
@@ -19,18 +37,8 @@ const FileDownloader: React.FC = () => {
             const response = await axios.get('http://localhost:4001/files');
             const files = response.data;
 
-            const fileItems: FileItem[] = files.map((file: any /* TODO */) => {
-
-                console.log(file);
-                return {
-                    filename: file.filename,
-                    displayName: file.displayName,
-                    size: file.size,
-                    url: `http://localhost:4001/download/${file.filename}`
-                };
-            });
-
-            setFiles(fileItems);
+            console.log('Initial files loaded:', files);
+            setFiles(files);
             setError(null);
         } catch (error) {
             console.error('Error fetching files:', error);
@@ -40,7 +48,7 @@ const FileDownloader: React.FC = () => {
         }
     };
 
-    const handleDownload = async (file: FileItem) => {
+    const handleDownload = async (file: FileInfo) => {
         try {
             setDownloadingFile(file.filename);
 
@@ -89,18 +97,17 @@ const FileDownloader: React.FC = () => {
             {!loading && files.length === 0 && !error && (
                 <div className="text-center py-8 text-gray-500">
                     <p>No files available for download.</p>
-                    <p className="text-sm mt-2">Upload some files first!</p>
                 </div>
             )}
 
             {files.length > 0 && (
                 <div className="mt-4">
                     <ul className="divide-y divide-gray-200">
-                        {files.map((file, index) => (
-                            <li key={index} className="py-3 hover:bg-gray-50 transition">
+                        {files.map((file) => (
+                            <li key={file.filename} className="p-2 hover:bg-gray-50 transition cursor-pointer" onClick={() => handleDownload(file)}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                        <p className="text-sm font-medium text-gray-900 truncate text-blue-600">
                                             {file.displayName}
                                         </p>
                                         {file.size > 0 && (
@@ -108,26 +115,14 @@ const FileDownloader: React.FC = () => {
                                                 {formatFileSize(file.size)}
                                             </p>
                                         )}
+                                        <p className="text-xs text-gray-400">
+                                            {new Date(file.date).toLocaleString()}
+                                        </p>
                                     </div>
-                                    <button
-                                        onClick={() => handleDownload(file)}
-                                        disabled={downloadingFile === file.filename}
-                                        className="ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
-                                    >
-                                        {downloadingFile === file.filename ? 'Downloading...' : 'Download'}
-                                    </button>
                                 </div>
                             </li>
                         ))}
                     </ul>
-                    <div className="mt-4 text-center">
-                        <button
-                            onClick={fetchFiles}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                            Refresh list
-                        </button>
-                    </div>
                 </div>
             )}
         </div>

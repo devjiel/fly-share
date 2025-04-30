@@ -1,0 +1,25 @@
+{
+  "name": "fly-share-api",
+  "version": "1.0.0",
+  "description": "Shared API types for Fly-Share",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "typescript",
+    "api",
+    "shared"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3"
+  }
+}
