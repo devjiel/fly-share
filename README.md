@@ -35,6 +35,45 @@ The application will be available at:
 - Frontend: http://localhost:3001
 - Backend API: http://localhost:4001
 
+## Automatic File Cleanup
+
+For ecological reasons, the application automatically deletes files after a specified period:
+
+1. **Default Configuration**:
+   - Files are automatically deleted after 12 hours
+   - Cleanup occurs every 6 hours
+
+2. **Ecological Optimization**:
+   - The cleanup scheduler automatically stops when there are no files to save resources
+   - The scheduler restarts automatically when new files are uploaded
+   - This reduces unnecessary system resource usage when the system is idle
+
+3. **Custom Configuration**:
+   ```typescript
+   // Create a decorator with custom settings (3 days TTL, check every hour)
+   const autoCleanStorage = new AutomaticCleanUpFileStorageAdapter(
+     3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
+     60 * 60 * 1000           // 1 hour in milliseconds
+   );
+   
+   // Change TTL settings after initialization
+   autoCleanStorage.setFileTTL(7 * 24 * 60 * 60 * 1000); // 7 days
+   
+   // Check if the scheduler is running
+   const isActive = autoCleanStorage.getCleanupSchedulerStatus();
+   
+   // Manually control the scheduler if needed
+   autoCleanStorage.forceStopScheduler();
+   autoCleanStorage.forceStartScheduler();
+   ```
+
+4. **Manual Cleanup**:
+   ```typescript
+   // Trigger cleanup manually
+   const deletedCount = autoCleanStorage.cleanupExpiredFiles();
+   console.log(`Deleted ${deletedCount} expired files`);
+   ```
+
 ## Technical Overview
 
 ### Architecture
@@ -89,29 +128,37 @@ fly-share/
    - **Adapters**: Provide concrete implementations of these interfaces
    - This allows for easy substitution of implementations and better testability
 
-5. **Clear Separation of Event Types**:
+5. **Automatic File Cleanup**: For ecological reasons, the system implements automatic deletion of old files:
+   - **Decorator Pattern**: Uses composition to add file cleanup functionality to the storage adapter
+   - **Configurable TTL**: Time-to-live settings for files can be configured (default: 24 hours)
+   - **Scheduled Cleanup**: Periodically checks and removes expired files (default: every 6 hours)
+   - **Resource Optimization**: Automatically pauses the cleanup scheduler when no files exist
+   - **Event-Driven Activation**: Listens for file uploads to restart the scheduler when needed
+   - **Event Notification**: Cleanup operations emit events that propagate through the system
+
+6. **Clear Separation of Event Types**:
    - **FileEvent**: Client-facing events shared between frontend and backend
    - **FileStorageEvent**: Internal events for file system changes
    - **FileProcessingEvent**: Events related to file processing operations
 
-6. **Event-Driven Architecture**: The application uses a comprehensive event system:
+7. **Event-Driven Architecture**: The application uses a comprehensive event system:
    - Infrastructure components emit low-level events (file added, deleted, updated)
    - Services translate these to domain events and add business logic
    - Controllers subscribe to domain events and communicate with clients
    - This creates a loosely coupled system where components interact through well-defined events
 
-7. **Layered Architecture**:
+8. **Layered Architecture**:
    - **Exposition Layer**: Controllers (API, WebSocket) handle external communication
    - **Service Layer**: Business logic and domain operations
    - **Infrastructure Layer**: Low-level file system operations and adapters
 
-8. **Real-time Updates with WebSockets**: The application uses Socket.IO to provide real-time updates for all file operations.
+9. **Real-time Updates with WebSockets**: The application uses Socket.IO to provide real-time updates for all file operations.
 
-9. **File System Monitoring**: The backend utilizes Chokidar to watch for file system changes, enabling detection of files that might be added outside the application.
+10. **File System Monitoring**: The backend utilizes Chokidar to watch for file system changes, enabling detection of files that might be added outside the application.
 
-10. **Clean UI with Tailwind CSS**: The frontend uses Tailwind CSS for rapid UI development with a clean, modern aesthetic.
+11. **Clean UI with Tailwind CSS**: The frontend uses Tailwind CSS for rapid UI development with a clean, modern aesthetic.
 
-11. **Containerization**: Docker and Docker Compose are used for consistent development environments and simplified deployment.
+12. **Containerization**: Docker and Docker Compose are used for consistent development environments and simplified deployment.
 
 ### WebSocket Implementation
 
