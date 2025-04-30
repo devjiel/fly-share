@@ -28,6 +28,13 @@ export interface FileResponse {
     mimetype: string;
 }
 
+export interface FileInfo {
+    filename: string;
+    displayName: string;
+    size: number;
+    url: string;
+}
+
 export class StorageService {
     /**
      * Middleware for single file upload
@@ -52,6 +59,42 @@ export class StorageService {
             size: req.file.size,
             mimetype: req.file.mimetype
         };
+    }
+
+    /**
+     * Get all files
+     */
+    public getFiles(): FileInfo[] { // TODO: could be cool to have websocket to notify when a new file is uploaded
+        try {
+            const files = fs.readdirSync(UPLOAD_DIR);
+            return files.map(file => {
+                const filePath = path.join(UPLOAD_DIR, file);
+                const stats = fs.statSync(filePath);
+
+                return {
+                    filename: file,
+                    displayName: file.split('-').slice(2).join('-') || file,
+                    size: stats.size,
+                    url: `http://localhost:4001/download/${file}`
+                };
+            });
+        } catch (error) {
+            console.error('Error reading directory:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get file
+     * @param filename Name of the file
+     */
+    public getFile(filename: string) {
+        const filePath = path.join(UPLOAD_DIR, filename);
+        if (!fs.existsSync(filePath)) {
+            return null;
+        }
+
+        return filePath;
     }
 }
 
