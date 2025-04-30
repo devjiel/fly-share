@@ -10,33 +10,41 @@ import { FileStorageEvent } from '../ports/events/file_storage_port_event';
 
 const UPLOAD_DIR = path.join(__dirname, '../../uploads');
 
-if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: function (req: Express.Request, file: Express.Multer.File, cb: Function) {
-        cb(null, UPLOAD_DIR);
-    },
-    filename: function (req: Express.Request, file: Express.Multer.File, cb: Function) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + '-' + file.originalname);
-    }
-});
-
-const upload = multer({ storage });
-
 export class FileStorageAdapter extends EventEmitter implements FileStoragePort {
     private watcher: chokidar.FSWatcher | null = null;
+    private uploadDir: string;
+    private storage: multer.StorageEngine;
+    private upload: multer.Multer;
 
-    constructor() {
+    constructor(uploadDir: string = UPLOAD_DIR) {
         super();
+        this.uploadDir = uploadDir;
+        
+        if (!fs.existsSync(this.uploadDir)) {
+            fs.mkdirSync(this.uploadDir, { recursive: true });
+        }
+
+        // Capture uploadDir in a local variable to use in callbacks
+        const dirPath = this.uploadDir;
+        
+        this.storage = multer.diskStorage({
+            destination: function (_: Express.Request, __: Express.Multer.File, cb: Function) {
+                cb(null, dirPath);
+            },
+            filename: function (_: Express.Request, file: Express.Multer.File, cb: Function) {
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                cb(null, uniqueSuffix + '-' + file.originalname);
+            }
+        });
+        
+        this.upload = multer({ storage: this.storage });
+
         this.initializeWatcher();
     }
-
+    
     private initializeWatcher() {
-        console.log(`Initializing file watcher for directory: ${UPLOAD_DIR}`);
-        this.watcher = chokidar.watch(UPLOAD_DIR, {
+        console.log(`Initializing file watcher for directory: ${this.uploadDir}`);
+        this.watcher = chokidar.watch(this.uploadDir, {
             ignored: /(^|[\/\\])\../, // ignore dotfiles
             persistent: true,
             awaitWriteFinish: true
@@ -78,7 +86,7 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
     }
 
     public handleSingleFileUpload() {
-        return upload.single('file');
+        return multer({ storage: this.storage }).single('file');
     }
 
     public getFileInfo(req: Request): FileInfo | null {
@@ -98,9 +106,9 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
 
     public getFiles(): FileInfo[] {
         try {
-            const files = fs.readdirSync(UPLOAD_DIR);
+            const files = fs.readdirSync(this.uploadDir);
             return files.map(file => {
-                const filePath = path.join(UPLOAD_DIR, file);
+                const filePath = path.join(this.uploadDir, file);
                 const stats = fs.statSync(filePath);
 
                 return {
@@ -118,7 +126,7 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
         }
     }
     public getFile(filename: string): string | null {
-        const filePath = path.join(UPLOAD_DIR, filename);
+        const filePath = path.join(this.uploadDir, filename);
         if (!fs.existsSync(filePath)) {
             return null;
         }
@@ -127,10 +135,14 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
     }
 
     public deleteFile(filename: string): void {
-        const filePath = path.join(UPLOAD_DIR, filename);
+        const filePath = path.join(this.uploadDir, filename);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
+    }
+    
+    public getUploadDir(): string {
+        return this.uploadDir;
     }
 }
 

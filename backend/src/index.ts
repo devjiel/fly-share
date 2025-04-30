@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import { WebSocketController } from './exposition/websocket_controller';
 import { ApiController } from './exposition/api_controller';
 import { FileService } from './services/file_service';
-import { FileStorageAdapter } from './infrastructure/file_storage_adapter';
+import { AutomaticCleanUpFileStorageAdapter } from './infrastructure/automatic_clean_up_file_storage_adapter';
 
 const app = express();
 const port = process.env.PORT || 4001;
@@ -29,7 +29,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
 
-const storageAdapter = new FileStorageAdapter();
+const storageAdapter = new AutomaticCleanUpFileStorageAdapter();
 const fileService = new FileService(storageAdapter);
 
 const webSocketController = new WebSocketController(io, fileService);
