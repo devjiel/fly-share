@@ -4,6 +4,7 @@ export interface FileInfo {
     size: number;
     url: string;
     mimetype: string;
-    date: Date;
+    date: Date | string;
+    deleteOnDownload: boolean;
     metadata?: Record<string, any>;
 } 

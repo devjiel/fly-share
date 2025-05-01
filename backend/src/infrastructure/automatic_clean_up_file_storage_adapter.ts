@@ -18,20 +18,20 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
     private fileTTL: number;
     private schedulerInterval: number;
     private isSchedulerActive: boolean = false;
-    
+
     constructor(
-        fileTTL: number = DEFAULT_FILE_TTL, 
+        fileTTL: number = DEFAULT_FILE_TTL,
         cleanupInterval: number = DEFAULT_CLEANUP_INTERVAL
     ) {
         super();
         this.fileStorage = new FileStorageAdapter();
         this.fileTTL = fileTTL;
         this.schedulerInterval = cleanupInterval;
-        
+
         this.forwardEvents();
 
         this.on(FileStorageEvent.FILE_ADDED, this.handleFileAdded.bind(this));
-        
+
         this.checkAndManageScheduler();
     }
 
@@ -51,7 +51,7 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
     }
 
     private checkAndManageScheduler() {
-        const files = this.fileStorage.getFiles();
+        const files = this.getFiles();
         if (files.length > 0 && !this.isSchedulerActive) {
             // Files exist but scheduler is not active, start it
             this.startCleanupScheduler(this.schedulerInterval);
@@ -65,19 +65,19 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
         if (this.isSchedulerActive) {
             return; // Already active
         }
-        
+
         console.log(`Starting file cleanup scheduler with interval: ${interval}ms`);
         this.cleanupInterval = setInterval(() => {
             this.cleanupExpiredFiles();
         }, interval);
         this.isSchedulerActive = true;
     }
-    
+
     private stopCleanupScheduler() {
         if (!this.isSchedulerActive) {
             return; // Already stopped
         }
-        
+
         console.log('Stopping cleanup scheduler as no files exist');
         if (this.cleanupInterval) {
             clearInterval(this.cleanupInterval);
@@ -90,30 +90,29 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
         console.log('Running file cleanup process...');
         const now = Date.now();
         let deletedCount = 0;
-        
+
         try {
             // Utiliser getFiles au lieu d'accéder directement au dossier
-            const allFiles = this.fileStorage.getFiles();
-            
-            for (const fileInfo of allFiles) {
-                const fileDate = fileInfo.date;
+            const allFiles = this.getFiles();
+
+            for (const file of allFiles) {
+                const fileDate = file.date;
                 const fileAge = now - fileDate.getTime();
-                
+
                 if (fileAge > this.fileTTL) {
-                    console.log(`Deleting expired file: ${fileInfo.filename} (age: ${fileAge}ms)`);
-                    this.fileStorage.deleteFile(fileInfo.filename);
+                    console.log(`Deleting expired file: ${file.filename} (age: ${fileAge}ms)`);
+                    this.fileStorage.deleteFile(file.filename);
                     deletedCount++;
-                    // The deleteFile method will trigger the FILE_DELETED event from the wrapped adapter
                 }
             }
-            
+
             console.log(`Cleanup complete. Deleted ${deletedCount} expired files.`);
-            
+
             // Check if we need to stop the scheduler after cleanup
-            if (this.fileStorage.getFiles().length === 0) {
+            if (this.getFiles().length === 0) {
                 this.stopCleanupScheduler();
             }
-            
+
             return deletedCount;
         } catch (error) {
             console.error('Error during file cleanup:', error);
@@ -132,11 +131,11 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
     public getCleanupSchedulerStatus(): boolean {
         return this.isSchedulerActive;
     }
-    
+
     public forceStartScheduler(): void {
         this.startCleanupScheduler(this.schedulerInterval);
     }
-    
+
     public forceStopScheduler(): void {
         this.stopCleanupScheduler();
     }
@@ -154,12 +153,15 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
         return this.fileStorage.handleSingleFileUpload();
     }
 
-    public getFileInfo(req: Request): FileInfo | null {
-        return this.fileStorage.getFileInfo(req);
-    }
-
-    public getFiles(): FileInfo[] {
-        return this.fileStorage.getFiles();
+    private getFiles(): any[] {
+        return fs.readdirSync(this.fileStorage.getUploadDir()).map(file => {
+            const filePath = path.join(this.fileStorage.getUploadDir(), file);
+            const stats = fs.statSync(filePath);
+            return {
+                filename: file,
+                date: stats.birthtime,
+            };
+        });
     }
 
     public getFile(filename: string): string | null {
@@ -168,12 +170,9 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
 
     public deleteFile(filename: string): void {
         this.fileStorage.deleteFile(filename);
-        
+
         // Check if this was the last file and manage scheduler accordingly
         setTimeout(() => this.checkAndManageScheduler(), 100);
     }
 
-    public updateFileMetadata(filename: string, metadata: Record<string, any>): FileInfo | null {
-        return this.fileStorage.updateFileMetadata(filename, metadata);
-    }
 } 

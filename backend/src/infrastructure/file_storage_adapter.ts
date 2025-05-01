@@ -9,31 +9,23 @@ import { FileStoragePort } from '../ports/file_storage_port';
 import { FileStorageEvent } from '../ports/events/file_storage_port_event';
 
 const UPLOAD_DIR = path.join(__dirname, '../../uploads');
-const METADATA_DIR = path.join(__dirname, '../../metadata');
 
 export class FileStorageAdapter extends EventEmitter implements FileStoragePort {
     private watcher: chokidar.FSWatcher | null = null;
     private uploadDir: string;
-    private metadataDir: string;
     private storage: multer.StorageEngine;
     private upload: multer.Multer;
 
-    constructor(uploadDir: string = UPLOAD_DIR, metadataDir: string = METADATA_DIR) {
+    constructor(uploadDir: string = UPLOAD_DIR) {
         super();
         this.uploadDir = uploadDir;
-        this.metadataDir = metadataDir;
-        
+
         if (!fs.existsSync(this.uploadDir)) {
             fs.mkdirSync(this.uploadDir, { recursive: true });
         }
-        
-        if (!fs.existsSync(this.metadataDir)) {
-            fs.mkdirSync(this.metadataDir, { recursive: true });
-        }
-
         // Capture uploadDir in a local variable to use in callbacks
         const dirPath = this.uploadDir;
-        
+
         this.storage = multer.diskStorage({
             destination: function (_: Express.Request, __: Express.Multer.File, cb: Function) {
                 cb(null, dirPath);
@@ -43,12 +35,12 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
                 cb(null, uniqueSuffix + '-' + file.originalname);
             }
         });
-        
+
         this.upload = multer({ storage: this.storage });
 
         this.initializeWatcher();
     }
-    
+
     private initializeWatcher() {
         console.log(`Initializing file watcher for directory: ${this.uploadDir}`);
         this.watcher = chokidar.watch(this.uploadDir, {
@@ -96,58 +88,6 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
         return multer({ storage: this.storage }).single('file');
     }
 
-    public getFileInfo(req: Request): FileInfo | null { // TODO: move to a service
-        if (!req.file) {
-            return null;
-        }
-
-        const fileInfo: FileInfo = {
-            filename: req.file.filename,
-            displayName: req.file.originalname,
-            size: req.file.size,
-            mimetype: req.file.mimetype,
-            url: `http://localhost:4001/download/${req.file.filename}`,
-            date: new Date()
-        };
-
-        // Load metadata if exists
-        const metadata = this.getMetadata(req.file.filename);
-        if (metadata) {
-            fileInfo.metadata = metadata;
-        }
-
-        return fileInfo;
-    }
-
-    public getFiles(): FileInfo[] {
-        try {
-            const files = fs.readdirSync(this.uploadDir);
-            return files.map(file => {
-                const filePath = path.join(this.uploadDir, file);
-                const stats = fs.statSync(filePath);
-                
-                const fileInfo: FileInfo = {
-                    filename: file,
-                    displayName: file.split('-').slice(2).join('-') || file,
-                    size: stats.size,
-                    url: `http://localhost:4001/download/${file}`,
-                    mimetype: 'application/octet-stream',
-                    date: stats.birthtime
-                };
-
-                // Load metadata if exists
-                const metadata = this.getMetadata(file);
-                if (metadata) {
-                    fileInfo.metadata = metadata;
-                }
-
-                return fileInfo;
-            });
-        } catch (error) {
-            console.error('Error reading directory:', error);
-            return [];
-        }
-    }
     public getFile(filename: string): string | null {
         const filePath = path.join(this.uploadDir, filename);
         if (!fs.existsSync(filePath)) {
@@ -163,78 +103,7 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
             fs.unlinkSync(filePath);
         }
     }
-    
-    /**
-     * Update metadata for a specific file
-     * @param filename The filename to update metadata for
-     * @param metadata The metadata to update or add
-     * @returns Updated FileInfo or null if file doesn't exist
-     */
-    public updateFileMetadata(filename: string, metadata: Record<string, any>): FileInfo | null {
-        const filePath = path.join(this.uploadDir, filename);
-        if (!fs.existsSync(filePath)) {
-            return null;
-        }
 
-        // Get existing metadata or initialize empty object
-        const existingMetadata = this.getMetadata(filename) || {};
-        
-        // Merge with new metadata
-        const updatedMetadata = { ...existingMetadata, ...metadata };
-        
-        // Save merged metadata
-        this.saveMetadata(filename, updatedMetadata);
-        
-        // Emit file updated event
-        this.emit(FileStorageEvent.FILE_UPDATED, filename);
-        
-        // Return updated file info
-        const stats = fs.statSync(filePath);
-        return {
-            filename,
-            displayName: filename.split('-').slice(2).join('-') || filename,
-            size: stats.size,
-            url: `http://localhost:4001/download/${filename}`,
-            mimetype: 'application/octet-stream',
-            date: stats.birthtime,
-            metadata: updatedMetadata
-        };
-    }
-    
-    /**
-     * Get metadata for a file
-     * @param filename File name
-     * @returns Metadata for the file or null if no metadata exists
-     */
-    private getMetadata(filename: string): Record<string, any> | null {
-        const metadataPath = path.join(this.metadataDir, `${filename}.json`);
-        if (!fs.existsSync(metadataPath)) {
-            return null;
-        }
-        
-        try {
-            const metadataContent = fs.readFileSync(metadataPath, 'utf8');
-            return JSON.parse(metadataContent);
-        } catch (error) {
-            console.error(`Error reading metadata for ${filename}:`, error);
-            return null;
-        }
-    }
-    
-    /**
-     * Save metadata for a file
-     * @param filename File name
-     * @param metadata Metadata to save
-     */
-    private saveMetadata(filename: string, metadata: Record<string, any>): void {
-        const metadataPath = path.join(this.metadataDir, `${filename}.json`);
-        try {
-            fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-        } catch (error) {
-            console.error(`Error saving metadata for ${filename}:`, error);
-        }
-    }
-    
     public getUploadDir(): string {
         return this.uploadDir;
     }
