@@ -5,4 +5,5 @@ export interface FileInfo {
     url: string;
     mimetype: string;
     date: Date;
+    metadata?: Record<string, any>;
 } 

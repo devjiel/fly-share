@@ -36,10 +36,11 @@ export class FileService {
      */
     public async processFileUpload(req: Request): Promise<FileInfo | null> {
         const originalFilename = req.file?.originalname || 'Unknown file';
+        const deleteOnDownload = req.body.deleteOnDownload || false;
 
         this.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, { filename: originalFilename });
 
-        try {            // Vérifier que le fichier a bien été uploadé
+        try {
             if (!req.file) {
                 this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'No file uploaded' });
                 return null;
@@ -52,6 +53,16 @@ export class FileService {
                 return null;
             }
 
+            const updatedFileInfo = this.storageAdapter.updateFileMetadata(
+                fileInfo.filename,
+                { deleteOnDownload: deleteOnDownload === 'true' }
+            );
+
+            if (updatedFileInfo) {
+                this.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename: originalFilename, fileInfo: updatedFileInfo });
+                return updatedFileInfo;
+            }
+
             this.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename: originalFilename, fileInfo });
 
             return fileInfo;
@@ -61,6 +72,16 @@ export class FileService {
 
             throw error;
         }
+    }
+
+    /**
+     * Get the metadata of a file
+     * @param filename File name
+     * @returns File metadata or null if the file does not exist
+     */
+    public getFileMetadata(filename: string): Record<string, any> | null {
+        const fileInfo = this.storageAdapter.getFiles().find(file => file.filename === filename);
+        return fileInfo?.metadata || null;
     }
 
     /**

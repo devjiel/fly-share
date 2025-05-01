@@ -67,6 +67,14 @@ export class ApiController {
             return;
         }
 
+        const metadata = this.fileService.getFileMetadata(filename);
+
+        if (metadata?.deleteOnDownload && metadata.deleteOnDownload === true) {
+            setTimeout(() => {
+                this.fileService.deleteFile(filename);
+            }, 5000);
+        }
+
         res.download(filePath);
     }
 

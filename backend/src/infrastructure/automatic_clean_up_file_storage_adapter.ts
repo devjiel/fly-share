@@ -172,4 +172,8 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
         // Check if this was the last file and manage scheduler accordingly
         setTimeout(() => this.checkAndManageScheduler(), 100);
     }
+
+    public updateFileMetadata(filename: string, metadata: Record<string, any>): FileInfo | null {
+        return this.fileStorage.updateFileMetadata(filename, metadata);
+    }
 } 
