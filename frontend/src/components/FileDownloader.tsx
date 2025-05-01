@@ -123,7 +123,7 @@ const FileDownloader: React.FC = () => {
                                             {new Date(file.date).toLocaleString()}
                                         </p>
                                     </div>
-                                    <button 
+                                    <button
                                         className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
                                         onClick={(e) => {
                                             e.stopPropagation();

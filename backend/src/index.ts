@@ -8,6 +8,7 @@ import { WebSocketController } from './exposition/websocket_controller';
 import { ApiController } from './exposition/api_controller';
 import { FileService } from './services/file_service';
 import { AutomaticCleanUpFileStorageAdapter } from './infrastructure/automatic_clean_up_file_storage_adapter';
+import { MetadataLowdbAdapter } from './infrastructure/metadata_lowdb_adapter';
 
 const app = express();
 const port = process.env.PORT || 4001;
@@ -30,7 +31,8 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 const storageAdapter = new AutomaticCleanUpFileStorageAdapter();
-const fileService = new FileService(storageAdapter);
+const metadataAdapter = new MetadataLowdbAdapter();
+const fileService = new FileService(storageAdapter, metadataAdapter);
 
 const webSocketController = new WebSocketController(io, fileService);
 webSocketController.init();

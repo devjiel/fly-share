@@ -3,13 +3,15 @@ import { FileEvent, FileInfo, FileProcessingEvent } from 'fly-share-api';
 import EventEmitter from 'events';
 import { FileStoragePort } from '../ports/file_storage_port';
 import { FileStorageEvent } from '../ports/events/file_storage_port_event';
-
+import { MetadataPort } from '../ports/metadata_port';
 export class FileService {
     private storageAdapter: FileStoragePort;
+    private metadataAdapter: MetadataPort;
     private eventEmitter: EventEmitter;
 
-    constructor(storageAdapter: FileStoragePort) {
+    constructor(storageAdapter: FileStoragePort, metadataAdapter: MetadataPort) {
         this.storageAdapter = storageAdapter;
+        this.metadataAdapter = metadataAdapter;
         this.eventEmitter = new EventEmitter();
 
         this.setupInfrastructureEventListeners();
@@ -21,10 +23,20 @@ export class FileService {
         });
 
         this.storageAdapter.on(FileStorageEvent.FILE_DELETED, (filename: string) => {
+            this.metadataAdapter.deleteMetadata(filename);
             this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
         });
 
         this.storageAdapter.on(FileStorageEvent.FILE_UPDATED, (filename: string) => {
+
+            const metadata = this.metadataAdapter.getMetadata(filename);
+            if (!metadata) {
+                this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: filename, error: 'Failed to get metadata' });
+                return;
+            }
+            const updatedFileInfo = { ...metadata, deleteOnDownload: metadata?.deleteOnDownload || false };
+
+            this.metadataAdapter.saveMetadata(filename, updatedFileInfo);
             this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
         });
     }
@@ -36,20 +48,30 @@ export class FileService {
      */
     public async processFileUpload(req: Request): Promise<FileInfo | null> {
         const originalFilename = req.file?.originalname || 'Unknown file';
+        const deleteOnDownload = req.body.deleteOnDownload || false;
 
         this.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, { filename: originalFilename });
 
-        try {            // Vérifier que le fichier a bien été uploadé
+        try {
             if (!req.file) {
                 this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'No file uploaded' });
                 return null;
             }
 
-            const fileInfo = this.storageAdapter.getFileInfo(req);
+            const fileInfo = this.getFileInfo(req);
 
             if (!fileInfo) {
                 this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'Failed to process file information' });
                 return null;
+            }
+
+            const updatedFileInfo = { ...fileInfo, deleteOnDownload: deleteOnDownload === 'true' };
+
+            this.metadataAdapter.saveMetadata(fileInfo.filename, updatedFileInfo);
+
+            if (updatedFileInfo) {
+                this.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename: originalFilename, fileInfo: updatedFileInfo });
+                return updatedFileInfo;
             }
 
             this.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, { filename: originalFilename, fileInfo });
@@ -61,6 +83,33 @@ export class FileService {
 
             throw error;
         }
+    }
+
+    private getFileInfo(req: Request): FileInfo | null { // TODO: move to a service
+        if (!req.file) {
+            return null;
+        }
+
+        const fileInfo: FileInfo = {
+            filename: req.file.filename,
+            displayName: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype,
+            url: `http://localhost:4001/download/${req.file.filename}`,
+            date: new Date(),
+            deleteOnDownload: req.body.deleteOnDownload || false
+        };
+
+        return fileInfo;
+    }
+
+    /**
+     * Get the metadata of a file
+     * @param filename File name
+     * @returns File metadata or null if the file does not exist
+     */
+    public getFileMetadata(filename: string): FileInfo | null {
+        return this.metadataAdapter.getMetadata(filename);
     }
 
     /**
@@ -77,11 +126,12 @@ export class FileService {
      * @returns List of files
      */
     public getFilesList(): FileInfo[] {
-        return this.storageAdapter.getFiles();
+        return this.metadataAdapter.getMetadataList();
     }
 
     public deleteFile(filename: string): void {
         this.storageAdapter.deleteFile(filename);
+        this.metadataAdapter.deleteMetadata(filename);
     }
 
     public onFileSystemEvent(event: FileEvent, listener: (filename: string) => void): void {

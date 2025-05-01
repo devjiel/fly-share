@@ -3,25 +3,18 @@ import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
 import toast, { Toaster } from 'react-hot-toast';
 
-interface UploadedFile {
-    filename: string;
-    path: string;
-    size: number;
-    mimetype: string;
-}
-
 const FileUploader: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
+    const [deleteOnDownload, setDeleteOnDownload] = useState<boolean>(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
             setError(null);
-            await handleUpload(e.target.files[0]);
         }
     };
 
@@ -35,18 +28,21 @@ const FileUploader: React.FC = () => {
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             setFile(e.dataTransfer.files[0]);
             setError(null);
-            await handleUpload(e.dataTransfer.files[0]);
         }
     };
 
-    const handleUpload = async (file: File) => {
+    const handleUpload = async () => {
+        if (!file) {
+            setError("No file selected");
+            return;
+        }
         setIsUploading(true);
         setUploadProgress(0);
         setError(null);
 
         const formData = new FormData();
         formData.append('file', file);
-
+        formData.append('deleteOnDownload', deleteOnDownload.toString());
         try {
             await axios.post('http://localhost:4001/upload', formData, {
                 headers: {
@@ -124,6 +120,30 @@ const FileUploader: React.FC = () => {
                         ></div>
                     </div>
                     <p className="text-center text-sm text-gray-500 mt-2">{uploadProgress}%</p>
+                </div>
+            )}
+
+            {file && (
+                <div className="mt-4 flex justify-end items-center">
+                    <label className="flex items-center cursor-pointer">
+                        <span className="mr-4 text-gray-700">Delete on download</span>
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={deleteOnDownload}
+                                onChange={(e) => setDeleteOnDownload(e.target.checked)}
+                            />
+                        <div className={`w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out ${deleteOnDownload ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        <div
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out ${deleteOnDownload ? 'translate-x-5' : ''}`}
+                        ></div>
+                        </div>
+                    </label>
+                    <div className="w-4"/>
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" onClick={() => handleUpload()}>
+                        Upload
+                    </button>
                 </div>
             )}
 

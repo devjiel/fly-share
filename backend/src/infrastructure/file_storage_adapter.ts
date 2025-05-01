@@ -19,14 +19,13 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
     constructor(uploadDir: string = UPLOAD_DIR) {
         super();
         this.uploadDir = uploadDir;
-        
+
         if (!fs.existsSync(this.uploadDir)) {
             fs.mkdirSync(this.uploadDir, { recursive: true });
         }
-
         // Capture uploadDir in a local variable to use in callbacks
         const dirPath = this.uploadDir;
-        
+
         this.storage = multer.diskStorage({
             destination: function (_: Express.Request, __: Express.Multer.File, cb: Function) {
                 cb(null, dirPath);
@@ -36,12 +35,12 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
                 cb(null, uniqueSuffix + '-' + file.originalname);
             }
         });
-        
+
         this.upload = multer({ storage: this.storage });
 
         this.initializeWatcher();
     }
-    
+
     private initializeWatcher() {
         console.log(`Initializing file watcher for directory: ${this.uploadDir}`);
         this.watcher = chokidar.watch(this.uploadDir, {
@@ -89,42 +88,6 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
         return multer({ storage: this.storage }).single('file');
     }
 
-    public getFileInfo(req: Request): FileInfo | null {
-        if (!req.file) {
-            return null;
-        }
-
-        return {
-            filename: req.file.filename,
-            displayName: req.file.originalname,
-            size: req.file.size,
-            mimetype: req.file.mimetype,
-            url: `http://localhost:4001/download/${req.file.filename}`,
-            date: new Date()
-        };
-    }
-
-    public getFiles(): FileInfo[] {
-        try {
-            const files = fs.readdirSync(this.uploadDir);
-            return files.map(file => {
-                const filePath = path.join(this.uploadDir, file);
-                const stats = fs.statSync(filePath);
-
-                return {
-                    filename: file,
-                    displayName: file.split('-').slice(2).join('-') || file,
-                    size: stats.size,
-                    url: `http://localhost:4001/download/${file}`,
-                    mimetype: 'application/octet-stream',
-                    date: stats.birthtime
-                };
-            });
-        } catch (error) {
-            console.error('Error reading directory:', error);
-            return [];
-        }
-    }
     public getFile(filename: string): string | null {
         const filePath = path.join(this.uploadDir, filename);
         if (!fs.existsSync(filePath)) {
@@ -140,7 +103,7 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
             fs.unlinkSync(filePath);
         }
     }
-    
+
     public getUploadDir(): string {
         return this.uploadDir;
     }
