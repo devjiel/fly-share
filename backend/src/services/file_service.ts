@@ -85,18 +85,15 @@ export class FileService {
         }
     }
 
-    public downloadFile(filename: string): string | null {
+    public deleteOnDownload(filename: string): void {
         const fileInfo = this.metadataAdapter.getMetadata(filename);
-        const filePath = this.storageAdapter.getFile(filename);
-        if (!filePath || !fileInfo) {
-            return null;
+        if (!fileInfo) {
+            return;
         }
 
         if (fileInfo.deleteOnDownload) {
-            this.scheduleFileDeletion(filename);
+            this.deleteFile(filename);
         }
-
-        return filePath;
     }
 
     private getFileInfo(req: Request): FileInfo | null { // TODO: move to a service

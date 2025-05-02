@@ -60,14 +60,21 @@ export class ApiController {
      */
     private downloadFile(req: Request, res: Response): void {
         const { filename } = req.params;
-        const filePath = this.fileService.downloadFile(filename);
+        const filePath = this.fileService.getFilePath(filename);
 
         if (!filePath) {
             res.status(404).json({ error: 'File not found' });
             return;
         }
 
-        res.download(filePath);
+        res.download(filePath, (err) => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                res.status(500).json({ error: 'Error downloading file' });
+            }
+
+            this.fileService.deleteOnDownload(filename);
+        });
     }
 
     /**
