@@ -142,7 +142,6 @@ export class FileService {
 
     public deleteFile(filename: string): void {
         this.storageAdapter.deleteFile(filename);
-        this.metadataAdapter.deleteMetadata(filename);
     }
 
     public onFileSystemEvent(event: FileEvent, listener: (filename: string) => void): void {
