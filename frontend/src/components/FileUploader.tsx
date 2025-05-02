@@ -2,6 +2,8 @@ import React, { useState, useRef, ChangeEvent } from 'react';
 import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
 import toast, { Toaster } from 'react-hot-toast';
+import { Button } from "./ui/button"
+
 
 const FileUploader: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -134,16 +136,16 @@ const FileUploader: React.FC = () => {
                                 checked={deleteOnDownload}
                                 onChange={(e) => setDeleteOnDownload(e.target.checked)}
                             />
-                        <div className={`w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out ${deleteOnDownload ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                        <div
-                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out ${deleteOnDownload ? 'translate-x-5' : ''}`}
-                        ></div>
+                            <div className={`w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out ${deleteOnDownload ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                            <div
+                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out ${deleteOnDownload ? 'translate-x-5' : ''}`}
+                            ></div>
                         </div>
                     </label>
-                    <div className="w-4"/>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" onClick={() => handleUpload()}>
+                    <div className="w-4" />
+                    <Button variant="outline" onClick={() => handleUpload()}>
                         Upload
-                    </button>
+                    </Button>
                 </div>
             )}
 
