@@ -46,7 +46,7 @@ export class FileService {
      * @param req Express request
      * @returns File information or null if there is an error
      */
-    public async processFileUpload(req: Request): Promise<FileInfo | null> {
+    public async uploadFile(req: Request): Promise<FileInfo | null> {
         const originalFilename = req.file?.originalname || 'Unknown file';
         const deleteOnDownload = req.body.deleteOnDownload || false;
 
@@ -83,6 +83,20 @@ export class FileService {
 
             throw error;
         }
+    }
+
+    public downloadFile(filename: string): string | null {
+        const fileInfo = this.metadataAdapter.getMetadata(filename);
+        const filePath = this.storageAdapter.getFile(filename);
+        if (!filePath || !fileInfo) {
+            return null;
+        }
+
+        if (fileInfo.deleteOnDownload) {
+            this.scheduleFileDeletion(filename);
+        }
+
+        return filePath;
     }
 
     private getFileInfo(req: Request): FileInfo | null { // TODO: move to a service
@@ -155,5 +169,11 @@ export class FileService {
 
     public closeWatcher(): void {
         this.storageAdapter.closeWatcher();
+    }
+
+    private scheduleFileDeletion(filename: string, delayMs: number = 5000): void {
+        setTimeout(() => {
+            this.deleteFile(filename);
+        }, delayMs);
     }
 } 

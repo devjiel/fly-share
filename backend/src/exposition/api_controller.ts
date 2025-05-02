@@ -33,7 +33,7 @@ export class ApiController {
      */
     private async uploadFile(req: Request, res: Response): Promise<void> {
         try {
-            const fileInfo = await this.fileService.processFileUpload(req);
+            const fileInfo = await this.fileService.uploadFile(req);
 
             if (!fileInfo) {
                 res.status(400).json({ error: 'No file uploaded' });
@@ -60,19 +60,11 @@ export class ApiController {
      */
     private downloadFile(req: Request, res: Response): void {
         const { filename } = req.params;
-        const filePath = this.fileService.getFilePath(filename);
+        const filePath = this.fileService.downloadFile(filename);
 
         if (!filePath) {
             res.status(404).json({ error: 'File not found' });
             return;
-        }
-
-        const metadata = this.fileService.getFileMetadata(filename);
-
-        if (metadata?.deleteOnDownload && metadata.deleteOnDownload === true) {
-            setTimeout(() => {
-                this.fileService.deleteFile(filename);
-            }, 5000);
         }
 
         res.download(filePath);
