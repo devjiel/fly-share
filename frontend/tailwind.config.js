@@ -19,6 +19,9 @@ module.exports = {
           border: '#2a2a2a'
         },
       },
+      textColor: {
+        hyperlink: '#ffffff',
+      },
     },
   },
   plugins: [],

@@ -103,7 +103,7 @@ const FileUploader: React.FC = () => {
 
                 {file ? (
                     <div className="py-2">
-                        <p className="text-dark-accent font-medium">{file.name}</p>
+                        <p className="text-sm hyperlink truncate">{file.name}</p>
                         <p className="text-dark-muted text-sm mt-1">{formatFileSize(file.size)}</p>
                     </div>
                 ) : (
@@ -143,7 +143,7 @@ const FileUploader: React.FC = () => {
                         </div>
                     </label>
                     <div className="w-4" />
-                    <Button variant="outline" className="bg-dark-secondary text-dark-text border-dark-border hover:bg-dark-primary hover:text-dark-accent" onClick={() => handleUpload()}>
+                    <Button variant="outline" onClick={() => handleUpload()}>
                         Upload
                     </Button>
                 </div>

@@ -111,7 +111,7 @@ const FileDownloader: React.FC = () => {
                             <li key={file.filename} className="p-2 hover:bg-dark-secondary transition cursor-pointer" onClick={() => handleDownload(file)}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-dark-accent truncate">
+                                        <p className="text-sm hyperlink truncate">
                                             {file.displayName}
                                         </p>
                                         {file.size > 0 && (
