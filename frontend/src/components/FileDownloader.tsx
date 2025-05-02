@@ -83,48 +83,48 @@ const FileDownloader: React.FC = () => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Available Files</h2>
+        <div className="bg-dark-card rounded-lg shadow-md p-6 border border-dark-border">
+            <h2 className="text-xl font-semibold mb-4 text-dark-text">Available Files</h2>
 
             {loading && (
                 <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark-accent"></div>
                 </div>
             )}
 
             {error && (
-                <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+                <div className="bg-red-900/20 text-red-400 p-4 rounded-md mb-4 border border-red-900/50">
                     {error}
                 </div>
             )}
 
             {!loading && files.length === 0 && !error && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-dark-muted">
                     <p>No files available for download.</p>
                 </div>
             )}
 
             {files.length > 0 && (
                 <div className="mt-4">
-                    <ul className="divide-y divide-gray-200">
+                    <ul className="divide-y divide-dark-border">
                         {files.map((file) => (
-                            <li key={file.filename} className="p-2 hover:bg-gray-50 transition cursor-pointer" onClick={() => handleDownload(file)}>
+                            <li key={file.filename} className="p-2 hover:bg-dark-secondary transition cursor-pointer" onClick={() => handleDownload(file)}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 truncate text-blue-600">
+                                        <p className="text-sm font-medium text-dark-accent truncate">
                                             {file.displayName}
                                         </p>
                                         {file.size > 0 && (
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-sm text-dark-muted">
                                                 {formatFileSize(file.size)}
                                             </p>
                                         )}
-                                        <p className="text-xs text-gray-400">
+                                        <p className="text-xs text-dark-muted">
                                             {new Date(file.date).toLocaleString()}
                                         </p>
                                     </div>
                                     <button
-                                        className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                        className="ml-4 p-2 text-dark-muted hover:text-red-400 transition-colors"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDelete(file.filename);

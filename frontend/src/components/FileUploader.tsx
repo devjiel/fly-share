@@ -84,12 +84,12 @@ const FileUploader: React.FC = () => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-dark-card rounded-lg shadow-md p-6 border border-dark-border">
             <Toaster />
-            <h2 className="text-xl font-semibold mb-4">Upload a file</h2>
+            <h2 className="text-xl font-semibold mb-4 text-dark-text">Upload a file</h2>
 
             <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition"
+                className="border-2 border-dashed border-dark-border rounded-lg p-8 text-center cursor-pointer hover:bg-dark-secondary transition"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
@@ -103,32 +103,32 @@ const FileUploader: React.FC = () => {
 
                 {file ? (
                     <div className="py-2">
-                        <p className="text-blue-600 font-medium">{file.name}</p>
-                        <p className="text-gray-500 text-sm mt-1">{formatFileSize(file.size)}</p>
+                        <p className="text-dark-accent font-medium">{file.name}</p>
+                        <p className="text-dark-muted text-sm mt-1">{formatFileSize(file.size)}</p>
                     </div>
                 ) : (
                     <div>
-                        <p className="text-gray-500">Drag and drop your file here or click to select</p>
+                        <p className="text-dark-muted">Drag and drop your file here or click to select</p>
                     </div>
                 )}
             </div>
 
             {isUploading && (
                 <div className="mt-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="w-full bg-dark-secondary rounded-full h-2.5">
                         <div
-                            className="bg-blue-600 h-2.5 rounded-full"
+                            className="bg-dark-accent h-2.5 rounded-full"
                             style={{ width: `${uploadProgress}%` }}
                         ></div>
                     </div>
-                    <p className="text-center text-sm text-gray-500 mt-2">{uploadProgress}%</p>
+                    <p className="text-center text-sm text-dark-muted mt-2">{uploadProgress}%</p>
                 </div>
             )}
 
             {file && (
                 <div className="mt-4 flex justify-end items-center">
                     <label className="flex items-center cursor-pointer">
-                        <span className="mr-4 text-gray-700">Delete on download</span>
+                        <span className="mr-4 text-dark-muted">Delete on download</span>
                         <div className="relative">
                             <input
                                 type="checkbox"
@@ -136,21 +136,21 @@ const FileUploader: React.FC = () => {
                                 checked={deleteOnDownload}
                                 onChange={(e) => setDeleteOnDownload(e.target.checked)}
                             />
-                            <div className={`w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out ${deleteOnDownload ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                            <div className={`w-11 h-6 bg-dark-secondary rounded-full shadow-inner transition-colors duration-300 ease-in-out ${deleteOnDownload ? 'bg-dark-accent' : 'bg-dark-secondary'}`}></div>
                             <div
-                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out ${deleteOnDownload ? 'translate-x-5' : ''}`}
+                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-dark-text rounded-full shadow transform transition-transform duration-300 ease-in-out ${deleteOnDownload ? 'translate-x-5' : ''}`}
                             ></div>
                         </div>
                     </label>
                     <div className="w-4" />
-                    <Button variant="outline" onClick={() => handleUpload()}>
+                    <Button variant="outline" className="bg-dark-secondary text-dark-text border-dark-border hover:bg-dark-primary hover:text-dark-accent" onClick={() => handleUpload()}>
                         Upload
                     </Button>
                 </div>
             )}
 
             {error && (
-                <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
+                <div className="mt-4 p-3 bg-red-900/20 text-red-400 rounded border border-red-900/50">
                     {error}
                 </div>
             )}
