@@ -19,6 +19,14 @@ export class FileService {
 
     private setupInfrastructureEventListeners(): void {
         this.storageAdapter.on(FileStorageEvent.FILE_ADDED, (filename: string) => {
+            const metadata = this.metadataAdapter.getMetadata(filename);
+            if (!metadata) {
+                this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: filename, error: 'Failed to get metadata' });
+                return;
+            }
+            const updatedFileInfo = { ...metadata, deleteOnDownload: metadata?.deleteOnDownload || false };
+
+            this.metadataAdapter.saveMetadata(filename, updatedFileInfo);
             this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
         });
 
@@ -28,15 +36,6 @@ export class FileService {
         });
 
         this.storageAdapter.on(FileStorageEvent.FILE_UPDATED, (filename: string) => {
-
-            const metadata = this.metadataAdapter.getMetadata(filename);
-            if (!metadata) {
-                this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: filename, error: 'Failed to get metadata' });
-                return;
-            }
-            const updatedFileInfo = { ...metadata, deleteOnDownload: metadata?.deleteOnDownload || false };
-
-            this.metadataAdapter.saveMetadata(filename, updatedFileInfo);
             this.eventEmitter.emit(FileEvent.FILES_CHANGED, filename);
         });
     }
