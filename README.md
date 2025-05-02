@@ -48,31 +48,9 @@ For ecological reasons, the application automatically deletes files after a spec
    - The scheduler restarts automatically when new files are uploaded
    - This reduces unnecessary system resource usage when the system is idle
 
-3. **Custom Configuration**:
-   ```typescript
-   // Create a decorator with custom settings (3 days TTL, check every hour)
-   const autoCleanStorage = new AutomaticCleanUpFileStorageAdapter(
-     3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
-     60 * 60 * 1000           // 1 hour in milliseconds
-   );
-   
-   // Change TTL settings after initialization
-   autoCleanStorage.setFileTTL(7 * 24 * 60 * 60 * 1000); // 7 days
-   
-   // Check if the scheduler is running
-   const isActive = autoCleanStorage.getCleanupSchedulerStatus();
-   
-   // Manually control the scheduler if needed
-   autoCleanStorage.forceStopScheduler();
-   autoCleanStorage.forceStartScheduler();
-   ```
+## Delete on Download Feature
 
-4. **Manual Cleanup**:
-   ```typescript
-   // Trigger cleanup manually
-   const deletedCount = autoCleanStorage.cleanupExpiredFiles();
-   console.log(`Deleted ${deletedCount} expired files`);
-   ```
+Files can be configured to be automatically deleted after being downloaded once
 
 ## Technical Overview
 
