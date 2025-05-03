@@ -61,7 +61,7 @@ const FileUploader: React.FC = () => {
 
             toast('File sent successfully', {
                 duration: 2500,
-                position: 'top-right',
+                position: 'bottom-right',
             });
 
             setFile(null);
