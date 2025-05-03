@@ -83,7 +83,7 @@ const FileDownloader: React.FC = () => {
     };
 
     return (
-        <div className="bg-dark-card rounded-lg shadow-md p-6 border border-dark-border">
+        <div className="rounded-lg shadow-md p-6 border border-dark-border">
             <h2 className="text-xl font-semibold mb-4 text-dark-text">Available Files</h2>
 
             {loading && (

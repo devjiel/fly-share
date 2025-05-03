@@ -1,9 +1,10 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
-import toast, { Toaster } from 'react-hot-toast';
 import { Button } from "./ui/button"
-
+import { Switch } from './ui/switch';
+import { Toaster } from "./ui/sonner"
+import { toast } from "sonner"
 
 const FileUploader: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -58,13 +59,9 @@ const FileUploader: React.FC = () => {
                 }
             });
 
-            toast.success('File sent successfully', {
+            toast('File sent successfully', {
                 duration: 2500,
                 position: 'top-right',
-                style: {
-                    background: '#4ade80',
-                    color: '#fff'
-                }
             });
 
             setFile(null);
@@ -84,10 +81,9 @@ const FileUploader: React.FC = () => {
     };
 
     return (
-        <div className="bg-dark-card rounded-lg shadow-md p-6 border border-dark-border">
-            <Toaster />
+        <div className="rounded-lg shadow-md p-6 border border-dark-border">
             <h2 className="text-xl font-semibold mb-4 text-dark-text">Upload a file</h2>
-
+            <Toaster />
             <div
                 className="border-2 border-dashed border-dark-border rounded-lg p-8 text-center cursor-pointer hover:bg-dark-secondary transition"
                 onClick={() => fileInputRef.current?.click()}
@@ -127,21 +123,14 @@ const FileUploader: React.FC = () => {
 
             {file && (
                 <div className="mt-4 flex justify-end items-center">
-                    <label className="flex items-center cursor-pointer">
-                        <span className="mr-4 text-dark-muted">Delete on download</span>
-                        <div className="relative">
-                            <input
-                                type="checkbox"
-                                className="sr-only"
-                                checked={deleteOnDownload}
-                                onChange={(e) => setDeleteOnDownload(e.target.checked)}
-                            />
-                            <div className={`w-11 h-6 bg-dark-secondary rounded-full shadow-inner transition-colors duration-300 ease-in-out ${deleteOnDownload ? 'bg-dark-accent' : 'bg-dark-secondary'}`}></div>
-                            <div
-                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-dark-text rounded-full shadow transform transition-transform duration-300 ease-in-out ${deleteOnDownload ? 'translate-x-5' : ''}`}
-                            ></div>
-                        </div>
-                    </label>
+                    <div className="flex items-center cursor-pointer">
+                        <span className="mr-2 text-dark-muted">Delete on download</span>
+                        <Switch
+                            id="delete-on-download"
+                            onCheckedChange={() => setDeleteOnDownload(!deleteOnDownload)}
+                            checked={deleteOnDownload}
+                        />
+                    </div>
                     <div className="w-4" />
                     <Button variant="outline" onClick={() => handleUpload()}>
                         Upload
