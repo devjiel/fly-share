@@ -27,6 +27,9 @@ cd fly-share
 ```
 
 2. Start the development environment:
+
+Warning: currently not working - still in progress
+
 ```bash
 docker-compose up
 ```
