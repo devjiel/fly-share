@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { FileService } from '../services/file_service';
+import { FileService } from '../services/file_service.js';
 
 export class ApiController {
     private router: Router;

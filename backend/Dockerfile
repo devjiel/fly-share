@@ -2,12 +2,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY backend/package*.json ./
+COPY shared ./shared
 
-RUN npm install
+COPY backend .
 
-COPY . .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 4001
 
-CMD ["npm", "run", "dev"] 
+CMD ["./entrypoint.sh"] 

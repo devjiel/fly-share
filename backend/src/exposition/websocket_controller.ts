@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { FileInfo, FileProcessingEvent, FileEvent } from 'fly-share-api';
-import { FileService } from '../services/file_service';
+import { FileService } from '../services/file_service.js';
 
 /**
  * WebSocket controller for real-time communication

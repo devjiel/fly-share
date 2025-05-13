@@ -1,9 +1,9 @@
 import { Request } from 'express';
 import { FileEvent, FileInfo, FileProcessingEvent } from 'fly-share-api';
 import EventEmitter from 'events';
-import { FileStoragePort } from '../ports/file_storage_port';
-import { FileStorageEvent } from '../ports/events/file_storage_port_event';
-import { MetadataPort } from '../ports/metadata_port';
+import { FileStoragePort } from '../ports/file_storage_port.js';
+import { FileStorageEvent } from '../ports/events/file_storage_port_event.js';
+import { MetadataPort } from '../ports/metadata_port.js';
 export class FileService {
     private storageAdapter: FileStoragePort;
     private metadataAdapter: MetadataPort;

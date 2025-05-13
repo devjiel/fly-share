@@ -1,11 +1,14 @@
 import EventEmitter from 'events';
 import fs from 'fs';
-import path from 'path';
+import path, { dirname } from 'path';
 import { Request } from 'express';
 import { FileInfo } from 'fly-share-api';
-import { FileStoragePort } from '../ports/file_storage_port';
-import { FileStorageEvent } from '../ports/events/file_storage_port_event';
-import { FileStorageAdapter } from './file_storage_adapter';
+import { FileStoragePort } from '../ports/file_storage_port.js';
+import { FileStorageEvent } from '../ports/events/file_storage_port_event.js';
+import { FileStorageAdapter } from './file_storage_adapter.js';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Default lifetime of files in milliseconds (12 hours)
 const DEFAULT_FILE_TTL = 12 * 60 * 60 * 1000; // TODO: use dotenv

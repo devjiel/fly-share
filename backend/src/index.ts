@@ -4,11 +4,11 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { WebSocketController } from './exposition/websocket_controller';
-import { ApiController } from './exposition/api_controller';
-import { FileService } from './services/file_service';
-import { AutomaticCleanUpFileStorageAdapter } from './infrastructure/automatic_clean_up_file_storage_adapter';
-import { MetadataLowdbAdapter } from './infrastructure/metadata_lowdb_adapter';
+import { WebSocketController } from './exposition/websocket_controller.js';
+import { ApiController } from './exposition/api_controller.js';
+import { FileService } from './services/file_service.js';
+import { AutomaticCleanUpFileStorageAdapter } from './infrastructure/automatic_clean_up_file_storage_adapter.js';
+import { MetadataLowdbAdapter } from './infrastructure/metadata_lowdb_adapter.js';
 
 const app = express();
 const port = process.env.PORT || 4001;

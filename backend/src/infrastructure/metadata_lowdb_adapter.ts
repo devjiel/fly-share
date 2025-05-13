@@ -1,9 +1,13 @@
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
-import { MetadataPort } from '../ports/metadata_port';
+import { MetadataPort } from '../ports/metadata_port.js';
 import * as path from 'path';
 import * as fs from 'fs';
 import { FileInfo } from 'fly-share-api';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 // Define the database schema
 type FileMetadataDB = {
     files: Record<string, Record<string, any>>;

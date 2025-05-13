@@ -15,7 +15,7 @@
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "fly-share-api": "file:../shared",
+    "fly-share-api": "file:shared",
     "lucide-react": "^0.506.0",
     "next-themes": "^0.4.6",
     "react": "^18.2.0",

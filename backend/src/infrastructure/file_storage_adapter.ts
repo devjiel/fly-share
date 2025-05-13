@@ -5,8 +5,12 @@ import { Request } from 'express';
 import { FileInfo } from 'fly-share-api';
 import * as chokidar from 'chokidar';
 import EventEmitter from 'events';
-import { FileStoragePort } from '../ports/file_storage_port';
-import { FileStorageEvent } from '../ports/events/file_storage_port_event';
+import { FileStoragePort } from '../ports/file_storage_port.js';
+import { FileStorageEvent } from '../ports/events/file_storage_port_event.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const UPLOAD_DIR = path.join(__dirname, '../../uploads');
 
