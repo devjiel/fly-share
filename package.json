@@ -24,7 +24,9 @@
     "dev:backend": "bun run --cwd apps/backend dev",
     "build:backend": "bun run --cwd apps/backend build",
     "test:backend": "bun run --cwd apps/backend test",
+    "start:backend": "bun run --cwd apps/backend start",
     "dev:frontend": "bun run --cwd apps/frontend start",
+    "start:frontend": "bun run --cwd apps/frontend start",
     "build:frontend": "bun run --cwd apps/frontend build",
     "test:frontend": "bun run --cwd apps/frontend test",
     "build:shared": "bun run --cwd apps/shared build"

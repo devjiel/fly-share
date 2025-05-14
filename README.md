@@ -1,6 +1,6 @@
 # Fly-Share
 
-A local network file sharing application built with Bun, Express, React, and Docker.
+A local network file sharing application built with Bun, Express, React.
 
 ## Project Structure
 
@@ -10,13 +10,11 @@ fly-share/
 │   ├── backend/    # Express + TypeScript backend
 │   ├── frontend/   # React + TypeScript + Tailwind frontend
 │   └── shared/     # Shared types and interfaces
-└── docker/         # Docker configuration files
 ```
 
 ## Prerequisites
 
 - Bun (v1.0 ou supérieur) : https://bun.sh/docs/installation
-- Docker et Docker Compose
 
 ## Développement avec Bun
 
@@ -173,8 +171,6 @@ fly-share/
 10. **File System Monitoring**: The backend utilizes Chokidar to watch for file system changes, enabling detection of files that might be added outside the application.
 
 11. **Clean UI with Tailwind CSS**: The frontend uses Tailwind CSS for rapid UI development with a clean, modern aesthetic.
-
-12. **Containerization**: Docker and Docker Compose are used for consistent development environments and simplified deployment.
 
 ### WebSocket Implementation
 
