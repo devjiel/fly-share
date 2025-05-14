@@ -1,42 +1,77 @@
 # Fly-Share
 
-A local network file sharing application built with Node.js, Express, React, and Docker.
+A local network file sharing application built with Bun, Express, React, and Docker.
 
 ## Project Structure
 
 ```
 fly-share/
-├── backend/         # Express + TypeScript backend
-├── frontend/        # React + TypeScript + Tailwind frontend
-├── shared/          # Shared types and interfaces
-└── docker/          # Docker configuration files
+├── apps/
+│   ├── backend/    # Express + TypeScript backend
+│   ├── frontend/   # React + TypeScript + Tailwind frontend
+│   └── shared/     # Shared types and interfaces
+└── docker/         # Docker configuration files
 ```
 
 ## Prerequisites
 
-- Node.js (v18 or higher)
-- Docker and Docker Compose
-- npm or yarn
+- Bun (v1.0 ou supérieur) : https://bun.sh/docs/installation
+- Docker et Docker Compose
 
-## Development Setup
+## Développement avec Bun
 
-1. Clone the repository:
+1. Clone le dépôt :
 ```bash
 git clone https://github.com/yourusername/fly-share.git
 cd fly-share
 ```
 
-2. Start the development environment:
-
-Warning: currently not working - still in progress
-
+2. Installe les dépendances (à la racine) :
 ```bash
-docker-compose up
+bun install
 ```
 
-The application will be available at:
-- Frontend: http://localhost:3001
-- Backend API: http://localhost:4001
+3. Lancer le backend en mode développement (hot reload natif Bun) :
+```bash
+bun run dev:backend
+```
+
+4. Lancer le frontend :
+```bash
+bun run dev:frontend
+```
+
+5. Builder la lib partagée :
+```bash
+bun run build:shared
+```
+
+6. Les scripts principaux sont définis dans le package.json racine :
+```json
+"scripts": {
+  "dev:backend": "bun run --cwd apps/backend dev",
+  "build:backend": "bun run --cwd apps/backend build",
+  "test:backend": "bun run --cwd apps/backend test",
+  "dev:frontend": "bun run --cwd apps/frontend start",
+  "build:frontend": "bun run --cwd apps/frontend build",
+  "test:frontend": "bun run --cwd apps/frontend test",
+  "build:shared": "bun run --cwd apps/shared build"
+}
+```
+
+## Notes spécifiques Bun
+
+- Bun gère les dépendances de tous les sous-projets via la configuration des workspaces dans `bunfig.toml` et le `package.json` racine.
+- Utilise le hot reload natif de Bun pour le backend (`bun --hot run ...`).
+- Les dépendances partagées sont installées à la racine.
+
+## Pour le reste de la documentation technique
+
+Le reste de la documentation (architecture, choix techniques, etc.) reste valable et décrit la structure et les principes du projet.
+
+---
+
+*Ce projet utilise désormais Bun pour une gestion plus rapide et moderne des dépendances et du développement monorepo.*
 
 ## Automatic File Cleanup
 

@@ -1,0 +1,2 @@
+[install]
+workspaces = ["apps/backend", "apps/frontend", "apps/shared"] 

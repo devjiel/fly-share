@@ -1,8 +1,26 @@
 {
+  "name": "fly-share",
+  "private": true,
+  "type": "module",
   "dependencies": {
     "lowdb": "^7.0.1"
   },
   "devDependencies": {
-    "@types/lowdb": "^1.0.15"
+    "@types/lowdb": "^1.0.15",
+    "@types/bun": "latest",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "dev:backend": "bun run --cwd apps/backend dev",
+    "build:backend": "bun run --cwd apps/backend build",
+    "test:backend": "bun run --cwd apps/backend test",
+    "dev:frontend": "bun run --cwd apps/frontend start",
+    "build:frontend": "bun run --cwd apps/frontend build",
+    "test:frontend": "bun run --cwd apps/frontend test",
+    "build:shared": "bun run --cwd apps/shared build"
   }
 }
