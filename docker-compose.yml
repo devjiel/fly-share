@@ -1,0 +1,45 @@
+services:
+  # Service pour construire la bibliothèque partagée
+  shared:
+    image: oven/bun:latest
+    working_dir: /app/shared
+    volumes:
+      - ./apps/shared:/app/shared
+    command: sh -c "bun install && bun run build"
+
+  # Service backend avec Bun
+  backend:
+    image: oven/bun:latest
+    working_dir: /app/backend
+    volumes:
+      - ./apps/backend:/app/backend
+      - ./apps/shared:/app/shared
+    ports:
+      - "4001:4001"
+    depends_on:
+      - shared
+    environment:
+      - NODE_ENV=development
+      - PORT=4001
+    command: sh -c "cd /app/shared && bun install && bun run build && cd /app/backend && bun install && bun run dev"
+
+  # Service frontend avec Bun
+  frontend:
+    image: oven/bun:latest
+    working_dir: /app/frontend
+    volumes:
+      - ./apps/frontend:/app/frontend
+      - ./apps/shared:/app/shared
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+      - shared
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - REACT_APP_API_URL=http://localhost:4001
+    command: sh -c "cd /app/shared && bun install && bun run build && cd /app/frontend && bun install && bun run start"
+
+volumes:
+  shared-dist:

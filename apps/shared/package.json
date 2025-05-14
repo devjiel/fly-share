@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "bunx --bun tsc",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -18,5 +18,7 @@
   ],
   "author": "",
   "license": "ISC",
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
 }

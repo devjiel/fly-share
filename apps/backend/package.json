@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "bun --hot run src/index.ts",
-    "build": "tsc",
+    "build": "bunx --bun tsc",
     "test": "jest"
   },
   "dependencies": {

@@ -44,7 +44,39 @@ bun run dev:frontend
 bun run build:shared
 ```
 
-6. Les scripts principaux sont définis dans le package.json racine :
+## Development with Docker
+
+Fly-Share can be easily run using Docker containers:
+
+1. Start the complete application with Docker Compose:
+```bash
+docker-compose up
+```
+
+2. Or use the startup script for a better experience:
+```bash
+./start.sh
+```
+
+3. Access the applications:
+   - Frontend: http://localhost:3001
+   - Backend API: http://localhost:4001
+
+4. View logs in real-time:
+```bash
+docker-compose logs --follow
+```
+
+5. Stop the containers:
+```bash
+docker-compose down
+```
+
+The Docker setup uses Bun for all services (shared library, backend, and frontend), ensuring consistent runtime environments and fast performance.
+
+## Scripts principaux
+
+Les scripts principaux sont définis dans le package.json racine :
 ```json
 "scripts": {
   "dev:backend": "bun run --cwd apps/backend dev",
