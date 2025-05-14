@@ -101,6 +101,14 @@ export class FileStorageAdapter extends EventEmitter implements FileStoragePort 
         return filePath;
     }
 
+    public async saveFile(filename: string, file: File): Promise<void> {
+        const filePath = path.join(this.uploadDir, filename);
+        const buffer = Buffer.from(await file.arrayBuffer());
+        fs.writeFileSync(filePath, buffer);
+
+        this.emit(FileStorageEvent.FILE_ADDED, filename);
+    }
+
     public deleteFile(filename: string): void {
         const filePath = path.join(this.uploadDir, filename);
         if (fs.existsSync(filePath)) {

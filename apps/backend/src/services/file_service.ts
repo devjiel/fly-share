@@ -45,27 +45,28 @@ export class FileService {
      * @param req Express request
      * @returns File information or null if there is an error
      */
-    public async uploadFile(req: Request): Promise<FileInfo | null> {
-        const originalFilename = req.file?.originalname || 'Unknown file';
-        const deleteOnDownload = req.body.deleteOnDownload || false;
+    public async uploadFile(file: File, deleteOnDownload: boolean = false): Promise<FileInfo | null> {
+        const originalFilename = file.name || 'Unknown file';
 
         this.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, { filename: originalFilename });
 
         try {
-            if (!req.file) {
+            if (!file) {
                 this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'No file uploaded' });
                 return null;
             }
 
-            const fileInfo = this.getFileInfo(req);
+            const fileInfo = this.getFileInfo(file);
 
             if (!fileInfo) {
                 this.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, { filename: originalFilename, error: 'Failed to process file information' });
                 return null;
             }
+            console.log('fileInfo', fileInfo);
 
-            const updatedFileInfo = { ...fileInfo, deleteOnDownload: deleteOnDownload === 'true' };
+            const updatedFileInfo = { ...fileInfo, deleteOnDownload: deleteOnDownload };
 
+            this.storageAdapter.saveFile(fileInfo.filename, file);
             this.metadataAdapter.saveMetadata(fileInfo.filename, updatedFileInfo);
 
             if (updatedFileInfo) {
@@ -95,19 +96,19 @@ export class FileService {
         }
     }
 
-    private getFileInfo(req: Request): FileInfo | null { // TODO: move to a service
-        if (!req.file) {
+    private getFileInfo(file: File): FileInfo | null {
+        if (!file) {
             return null;
         }
 
         const fileInfo: FileInfo = {
-            filename: req.file.filename,
-            displayName: req.file.originalname,
-            size: req.file.size,
-            mimetype: req.file.mimetype,
-            url: `http://localhost:4001/download/${req.file.filename}`,
+            filename: file.name,
+            displayName: file.name,
+            size: file.size,
+            mimetype: file.type,
+            url: `http://localhost:4001/download/${file.name}`,
             date: new Date(),
-            deleteOnDownload: req.body.deleteOnDownload || false
+            deleteOnDownload: false
         };
 
         return fileInfo;

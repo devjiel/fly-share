@@ -171,6 +171,10 @@ export class AutomaticCleanUpFileStorageAdapter extends EventEmitter implements 
         return this.fileStorage.getFile(filename);
     }
 
+    public saveFile(filename: string, file: File): void {
+        this.fileStorage.saveFile(filename, file);
+    }
+
     public deleteFile(filename: string): void {
         this.fileStorage.deleteFile(filename);
 

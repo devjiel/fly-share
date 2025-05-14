@@ -1,16 +1,18 @@
-import { Server, Socket } from 'socket.io';
+
 import { FileInfo, FileProcessingEvent, FileEvent } from 'fly-share-api';
 import { FileService } from '../services/file_service.js';
+import { Server } from 'bun';
 
 /**
  * WebSocket controller for real-time communication
  */
 export class WebSocketController {
-    private io: Server;
+    private server: Server;
     private fileService: FileService;
+    private topic: string = 'file';
 
-    constructor(io: Server, fileService: FileService) {
-        this.io = io;
+    constructor(server: Server, fileService: FileService) {
+        this.server = server;
         this.fileService = fileService;
     }
 
@@ -18,7 +20,7 @@ export class WebSocketController {
      * Initialize the WebSocket controller
      */
     public init(): void {
-        this.io.on('connection', this.handleConnection.bind(this));
+        this.sendFilesList();
 
         // Subscribe to file system events
         this.fileService.onFileSystemEvent(FileEvent.FILES_CHANGED, this.handleFileChanged.bind(this));
@@ -39,25 +41,15 @@ export class WebSocketController {
     }
 
     /**
-     * Handle new client connection
-     */
-    private handleConnection(socket: Socket): void {
-        console.log('Client connected:', socket.id);
-
-        // Send initial file list to the new client
-        this.sendFilesList(socket);
-
-        socket.on('disconnect', () => {
-            console.log('Client disconnected:', socket.id);
-        });
-    }
-
-    /**
      * Send the file list to a specific client
      */
-    private sendFilesList(socket: Socket): void {
+    private sendFilesList(): void {
         const files = this.fileService.getFilesList();
-        socket.emit(FileEvent.FILES_CHANGED, files);
+        const message = {
+            event: FileEvent.FILES_CHANGED,
+            data: files
+        }
+        this.server.publish(this.topic, JSON.stringify(message));
     }
 
     /**
@@ -65,7 +57,11 @@ export class WebSocketController {
      */
     private broadcastFilesList(): void {
         const files = this.fileService.getFilesList();
-        this.io.emit(FileEvent.FILES_CHANGED, files);
+        const message = {
+            event: FileEvent.FILES_CHANGED,
+            data: files
+        }
+        this.server.publish(this.topic, JSON.stringify(message));
     }
 
     /**
@@ -81,7 +77,11 @@ export class WebSocketController {
      */
     private handleFileProcessingStarted(data: { filename: string }): void {
         console.log(`WebSocketService: File processing started: ${data.filename}`);
-        this.io.emit(FileProcessingEvent.FILE_PROCESSING_STARTED, data);
+        const message = {
+            event: FileProcessingEvent.FILE_PROCESSING_STARTED,
+            data: data
+        }
+        this.server.publish(this.topic, JSON.stringify(message));
     }
 
     /**
@@ -94,7 +94,11 @@ export class WebSocketController {
         }
 
         console.log(`WebSocketService: File processing completed: ${data.filename}`);
-        this.io.emit(FileProcessingEvent.FILE_PROCESSING_COMPLETED, data);
+        const message = {
+            event: FileProcessingEvent.FILE_PROCESSING_COMPLETED,
+            data: data
+        }
+        this.server.publish(this.topic, JSON.stringify(message));
 
         // Broadcast updated file list
         this.broadcastFilesList();
@@ -105,6 +109,10 @@ export class WebSocketController {
      */
     private handleFileProcessingError(data: { filename: string; error?: string }): void {
         console.log(`WebSocketService: File processing error: ${data.filename}, Error: ${data.error || 'Unknown error'}`);
-        this.io.emit(FileProcessingEvent.FILE_PROCESSING_ERROR, data);
+        const message = {
+            event: FileProcessingEvent.FILE_PROCESSING_ERROR,
+            data: data
+        }
+        this.server.publish(this.topic, JSON.stringify(message));
     }
 } 

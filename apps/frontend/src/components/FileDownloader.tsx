@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { formatFileSize } from '../utils/file_utils';
 import { FileEvent, FileInfo } from 'fly-share-api';
-import { io, Socket } from 'socket.io-client';
+
 
 const FileDownloader: React.FC = () => {
     const [files, setFiles] = useState<FileInfo[]>([]);
@@ -11,20 +11,29 @@ const FileDownloader: React.FC = () => {
 
     useEffect(() => {
         // Connect to WebSocket server
-        const socketInstance = io('http://localhost:4001');
+        const socket = new WebSocket('ws://localhost:4001/ws');
+
+        socket.onopen = (event) => {
+            console.log('WebSocket client opened', event);
+        };
 
         // Listen for file updates
-        socketInstance.on(FileEvent.FILES_CHANGED, (updatedFiles: FileInfo[]) => {
-            console.log('Received updated files via WebSocket:', updatedFiles);
-            setFiles(updatedFiles);
-        });
+
+        socket.onmessage = (event) => {
+            console.log('WebSocket client received message:', event);
+            const message = JSON.parse(event.data);
+            if (message.event === FileEvent.FILES_CHANGED) {
+                setFiles(message.data);
+            }
+        };
+
 
         // Initial fetch
         fetchFiles();
 
         // Cleanup on unmount
         return () => {
-            socketInstance.disconnect();
+            socket.close();
         };
     }, []);
 
