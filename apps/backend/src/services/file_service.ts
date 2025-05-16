@@ -1,4 +1,3 @@
-import { Request } from 'express';
 import { FileEvent, FileInfo, FileProcessingEvent } from 'fly-share-api';
 import EventEmitter from 'events';
 import { FileStoragePort } from '../ports/file_storage_port.js';
@@ -174,4 +173,4 @@ export class FileService {
             this.deleteFile(filename);
         }, delayMs);
     }
-} 
+}

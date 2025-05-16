@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { WebSocketController } from './exposition/websocket_controller.js';
@@ -153,4 +152,4 @@ process.on('SIGINT', () => {
   fileService.closeWatcher();
   server.stop();
   // TODO websocket.close(test);
-}); 
+});

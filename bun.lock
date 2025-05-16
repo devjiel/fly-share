@@ -73,6 +73,9 @@
     "apps/shared": {
       "name": "fly-share-api",
       "version": "1.0.0",
+      "devDependencies": {
+        "typescript": "^5.3.3",
+      },
     },
   },
   "packages": {
